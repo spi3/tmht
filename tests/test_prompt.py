@@ -135,6 +135,21 @@ class TestBuildMessages:
         expected_format = f"Command: {cmd}\n\nContext:\n{context}\n\nWhat I want to do: {query}"
         assert user_content == expected_format
 
+    def test_none_command_omits_command_and_context(self):
+        """When cmd is None, user message contains only the query."""
+        result = build_messages(None, "how do I list files", "")
+        user_content = result[1]["content"]
+        assert user_content == "What I want to do: how do I list files"
+        assert "Command:" not in user_content
+        assert "Context:" not in user_content
+
+    def test_none_command_returns_valid_structure(self):
+        """When cmd is None, the message list is still well-formed."""
+        result = build_messages(None, "show disk usage", "")
+        assert len(result) == 2
+        assert result[0]["role"] == "system"
+        assert result[1]["role"] == "user"
+
 
 class TestSystemPrompt:
     """Tests for SYSTEM_PROMPT constant."""

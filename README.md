@@ -1,6 +1,6 @@
 # tmht — Tell Me How To
 
-AI-powered terminal assistant that generates commands from natural language.
+A stupid simple, AI-powered terminal assistant that generates commands from natural language.
 
 ```
 $ tmht git create and switch to a new branch called testing

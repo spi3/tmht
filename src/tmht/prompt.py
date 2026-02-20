@@ -14,9 +14,12 @@ Rules:
 """
 
 
-def build_messages(cmd: str, query: str, context: str) -> list[dict]:
+def build_messages(cmd: str | None, query: str, context: str) -> list[dict]:
     """Build the message list for the LLM call."""
-    user_content = f"Command: {cmd}\n\nContext:\n{context}\n\nWhat I want to do: {query}"
+    if cmd is not None:
+        user_content = f"Command: {cmd}\n\nContext:\n{context}\n\nWhat I want to do: {query}"
+    else:
+        user_content = f"What I want to do: {query}"
     return [
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": user_content},

@@ -2,6 +2,7 @@
 
 import argparse
 import logging
+import shutil
 import sys
 
 from tmht import __version__
@@ -30,13 +31,10 @@ def main(argv: list[str] | None = None) -> int:
         help="Enable debug logging",
     )
     parser.add_argument(
-        "command",
-        help="The terminal command to get help with (e.g., git, sed, curl)",
-    )
-    parser.add_argument(
-        "query",
+        "words",
         nargs="+",
-        help="What you want to do, in natural language",
+        metavar="command/query",
+        help="A command followed by a query, or just a natural-language query",
     )
 
     args = parser.parse_args(argv)
@@ -51,8 +49,13 @@ def main(argv: list[str] | None = None) -> int:
     else:
         config = load_config()
 
-    cmd = args.command
-    query = " ".join(args.query)
+    first, rest = args.words[0], args.words[1:]
+    if shutil.which(first):
+        cmd = first
+        query = " ".join(rest) if rest else ""
+    else:
+        cmd = None
+        query = " ".join(args.words)
     log.debug("cmd=%s query=%r", cmd, query)
 
     context = gather_context(cmd)

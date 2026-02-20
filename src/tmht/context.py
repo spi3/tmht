@@ -50,8 +50,12 @@ def get_man_page(cmd: str, max_lines: int = 200) -> str | None:
     return None
 
 
-def gather_context(cmd: str) -> str:
+def gather_context(cmd: str | None) -> str:
     """Gather all available documentation for a command."""
+    if cmd is None:
+        log.debug("no command specified, skipping context gathering")
+        return ""
+
     parts = []
 
     help_output = get_help_output(cmd)

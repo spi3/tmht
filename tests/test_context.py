@@ -201,3 +201,7 @@ class TestGatherContext:
         mock_man.return_value = None
         result = gather_context("git")
         assert isinstance(result, str)
+
+    def test_returns_empty_string_when_cmd_is_none(self):
+        result = gather_context(None)
+        assert result == ""
