@@ -5,9 +5,11 @@ import logging
 import sys
 
 from tmht import __version__
+from tmht.config import load_config, needs_setup
 from tmht.context import gather_context
 from tmht.llm import query_llm
 from tmht.prompt import build_messages
+from tmht.setup import run_setup
 
 log = logging.getLogger("tmht")
 
@@ -44,6 +46,11 @@ def main(argv: list[str] | None = None) -> int:
         format="%(name)s %(levelname)s: %(message)s",
     )
 
+    if needs_setup():
+        config = run_setup()
+    else:
+        config = load_config()
+
     cmd = args.command
     query = " ".join(args.query)
     log.debug("cmd=%s query=%r", cmd, query)
@@ -52,7 +59,7 @@ def main(argv: list[str] | None = None) -> int:
     messages = build_messages(cmd, query, context)
 
     try:
-        result = query_llm(messages)
+        result = query_llm(messages, config)
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1

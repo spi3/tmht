@@ -20,16 +20,35 @@ uv sync
 
 ## Setup
 
-Set an API key for your chosen provider:
+On first run, tmht launches an interactive setup to select your provider, model, and API key:
 
-```bash
-# Gemini (default)
-export GEMINI_API_KEY="..."
-
-# Or use any litellm-supported provider
-export ANTHROPIC_API_KEY="..."
-export OPENAI_API_KEY="..."
 ```
+$ tmht git "show recent commits"
+
+Welcome to tmht! Let's get you set up.
+
+Select your LLM provider:
+  1. Gemini
+  2. Anthropic
+  3. OpenAI
+  4. Ollama (local, no API key needed)
+
+  Enter choice (1-4): 1
+
+Enter your Gemini API key:
+  API key:
+
+Select a model:
+  1. Gemini 3 Flash (recommended)
+  2. Gemini 2.0 Flash
+  3. Gemini 2.5 Pro
+
+  Enter choice (1-3): 1
+
+Configuration saved to ~/.tmht/config.json
+```
+
+Setup is skipped if `~/.tmht/config.json` already exists or provider API key environment variables are set.
 
 ## Usage
 
@@ -62,6 +81,8 @@ tmht curl "http://example.com and display all request headers"
 
 ## Configuration
 
+Config is stored in `~/.tmht/config.json`. Environment variables override the config file.
+
 | Environment Variable | Description | Default |
 |---|---|---|
 | `TMHT_MODEL` | LLM model to use ([litellm format](https://docs.litellm.ai/docs/providers)) | `gemini/gemini-3-flash-preview` |
@@ -69,10 +90,8 @@ tmht curl "http://example.com and display all request headers"
 | `ANTHROPIC_API_KEY` | Anthropic API key | — |
 | `OPENAI_API_KEY` | OpenAI API key | — |
 
-### Switching providers
+To re-run setup, delete the config file:
 
 ```bash
-export TMHT_MODEL="anthropic/claude-haiku-4-5-20251001"
-export TMHT_MODEL="openai/gpt-4o-mini"
-export TMHT_MODEL="ollama/llama3"
+rm ~/.tmht/config.json
 ```
