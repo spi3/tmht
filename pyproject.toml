@@ -1,0 +1,17 @@
+[project]
+name = "tmht"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "spi", email = "spi3@pm.me" }
+]
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+tmht = "tmht.cli:entrypoint"
+
+[build-system]
+requires = ["uv_build>=0.9.9,<0.10.0"]
+build-backend = "uv_build"
