@@ -1,7 +1,10 @@
 """Gather documentation context for a terminal command."""
 
+import logging
 import os
 import subprocess
+
+log = logging.getLogger(__name__)
 
 
 def get_help_output(cmd: str) -> str | None:
@@ -14,8 +17,11 @@ def get_help_output(cmd: str) -> str | None:
             timeout=5,
         )
         output = result.stdout or result.stderr
-        return output.strip() if output and output.strip() else None
-    except (subprocess.TimeoutExpired, FileNotFoundError, PermissionError):
+        text = output.strip() if output and output.strip() else None
+        log.debug("%s --help returned %d chars", cmd, len(text) if text else 0)
+        return text
+    except (subprocess.TimeoutExpired, FileNotFoundError, PermissionError) as e:
+        log.debug("%s --help failed: %s", cmd, e)
         return None
 
 
@@ -36,9 +42,11 @@ def get_man_page(cmd: str, max_lines: int = 200) -> str | None:
             if total > max_lines:
                 lines = lines[:max_lines]
                 lines.append(f"\n... (truncated, {max_lines} of {total} lines shown)")
+            log.debug("man %s returned %d lines", cmd, total)
             return "\n".join(lines)
-    except (subprocess.TimeoutExpired, FileNotFoundError):
-        pass
+        log.debug("man %s returned nothing (rc=%d)", cmd, result.returncode)
+    except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+        log.debug("man %s failed: %s", cmd, e)
     return None
 
 
@@ -55,6 +63,9 @@ def gather_context(cmd: str) -> str:
         parts.append(f"=== man {cmd} ===\n{man_page}")
 
     if not parts:
+        log.debug("no docs found for %s", cmd)
         parts.append(f"No documentation found for '{cmd}'. Rely on general knowledge.")
 
-    return "\n\n".join(parts)
+    context = "\n\n".join(parts)
+    log.debug("total context: %d chars", len(context))
+    return context

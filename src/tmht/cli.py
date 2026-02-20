@@ -1,12 +1,15 @@
 """Command-line interface for tmht."""
 
 import argparse
+import logging
 import sys
 
 from tmht import __version__
 from tmht.context import gather_context
 from tmht.llm import query_llm
 from tmht.prompt import build_messages
+
+log = logging.getLogger("tmht")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -20,6 +23,11 @@ def main(argv: list[str] | None = None) -> int:
         version=f"%(prog)s {__version__}",
     )
     parser.add_argument(
+        "-d", "--debug",
+        action="store_true",
+        help="Enable debug logging",
+    )
+    parser.add_argument(
         "command",
         help="The terminal command to get help with (e.g., git, sed, curl)",
     )
@@ -31,8 +39,14 @@ def main(argv: list[str] | None = None) -> int:
 
     args = parser.parse_args(argv)
 
+    logging.basicConfig(
+        level=logging.DEBUG if args.debug else logging.WARNING,
+        format="%(name)s %(levelname)s: %(message)s",
+    )
+
     cmd = args.command
     query = " ".join(args.query)
+    log.debug("cmd=%s query=%r", cmd, query)
 
     context = gather_context(cmd)
     messages = build_messages(cmd, query, context)
