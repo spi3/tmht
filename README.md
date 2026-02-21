@@ -2,6 +2,10 @@
 
 A stupid simple, AI-powered terminal assistant that generates commands from natural language.
 
+## Documentation
+
+Docs website: https://spi3.github.io/tutr/index.html
+
 ## What does it do?
 
 Generates terminal commands from natural language queries.
