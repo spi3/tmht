@@ -4,22 +4,16 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, TypedDict
+from typing import Any
 
-from pydantic import BaseModel
+from tutr.models import DEFAULT_MODEL as MODEL_DEFAULT_MODEL
+from tutr.models import ProviderInfo, TutrConfig
 
 log = logging.getLogger(__name__)
 
 CONFIG_DIR = Path.home() / ".tutr"
 CONFIG_FILE = CONFIG_DIR / "config.json"
-
-DEFAULT_MODEL = "gemini/gemini-3-flash-preview"
-
-
-class ProviderInfo(TypedDict):
-    env_key: str | None
-    label: str
-
+DEFAULT_MODEL = MODEL_DEFAULT_MODEL
 
 PROVIDERS: dict[str, ProviderInfo] = {
     "gemini": {"env_key": "GEMINI_API_KEY", "label": "Gemini"},
@@ -27,14 +21,6 @@ PROVIDERS: dict[str, ProviderInfo] = {
     "openai": {"env_key": "OPENAI_API_KEY", "label": "OpenAI"},
     "ollama": {"env_key": None, "label": "Ollama (local, no API key needed)"},
 }
-
-
-class TutrConfig(BaseModel):
-    """Runtime configuration for tutr."""
-
-    provider: str | None = None
-    model: str = DEFAULT_MODEL
-    api_key: str | None = None
 
 
 def load_config() -> TutrConfig:

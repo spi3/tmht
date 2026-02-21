@@ -1,21 +1,10 @@
 """Shell detection and launch configuration."""
 
-from dataclasses import dataclass
 import os
 import shutil
 
+from tutr.models import ShellLaunchConfig
 from tutr.shell.hooks import write_bash_rcfile, write_powershell_profile, write_zsh_rcdir
-
-
-@dataclass
-class ShellLaunchConfig:
-    """How to launch a supported interactive shell in the PTY child process."""
-
-    kind: str
-    executable: str
-    argv: list[str]
-    env: dict[str, str]
-    cleanup_paths: list[str]
 
 
 def _classify_shell(candidate: str) -> str | None:
