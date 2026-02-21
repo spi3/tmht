@@ -18,7 +18,7 @@ uv build             # Build wheel + sdist into dist/
 Python CLI tool using `uv` (with `uv_build` backend) and `src/` layout.
 
 - **Entry point**: `src/tutr/cli.py` — `entrypoint()` is registered as `[project.scripts] tutr` in `pyproject.toml`. `main(argv)` contains the argparse logic and returns an exit code.
-- **Interactive shell wrapper**: `src/tutr/shell.py` (`[project.scripts] shell`) auto-detects and launches Bash, Zsh, or PowerShell. `TUTR_SHELL` can override detection.
+- **Interactive shell wrapper**: `src/tutr/shell/` package (`[project.scripts] shell` via `tutr.shell:entrypoint`) contains the PTY loop (`loop.py`), shell detection/launch config (`detection.py`), startup hook writers (`hooks.py`), and tutor prompt logic (`tutor.py`). `TUTR_SHELL` can override detection.
 - **`__main__.py`**: enables `python -m tutr` invocation.
 - **Version**: single source of truth in `src/tutr/__init__.py` (`__version__`).
 

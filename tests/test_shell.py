@@ -42,29 +42,29 @@ class TestShellDetection:
         assert _classify_shell("/usr/bin/fish") is None
 
     @patch.dict("os.environ", {"TUTR_SHELL": "zsh", "SHELL": "/bin/bash"}, clear=False)
-    @patch("tutr.shell.os.name", "posix")
+    @patch("tutr.shell.detection.os.name", "posix")
     def test_candidates_prefer_override_then_env(self):
         assert _shell_candidates()[:4] == ["zsh", "/bin/bash", "bash", "pwsh"]
 
     @patch.dict("os.environ", {"SHELL": "/bin/zsh"}, clear=False)
-    @patch("tutr.shell.os.name", "posix")
-    @patch("tutr.shell._resolve_executable", side_effect=lambda value: value)
+    @patch("tutr.shell.detection.os.name", "posix")
+    @patch("tutr.shell.detection._resolve_executable", side_effect=lambda value: value)
     def test_detect_shell_uses_shell_env_when_supported(self, _resolve):
         assert _detect_shell() == ("zsh", "/bin/zsh")
 
     @patch.dict("os.environ", {"SHELL": "/usr/bin/fish"}, clear=False)
-    @patch("tutr.shell.os.name", "posix")
+    @patch("tutr.shell.detection.os.name", "posix")
     @patch(
-        "tutr.shell._resolve_executable",
+        "tutr.shell.detection._resolve_executable",
         side_effect=lambda value: {"bash": "/bin/bash"}.get(value),
     )
     def test_detect_shell_falls_back_to_bash(self, _resolve):
         assert _detect_shell() == ("bash", "/bin/bash")
 
     @patch.dict("os.environ", {}, clear=True)
-    @patch("tutr.shell.os.name", "nt")
+    @patch("tutr.shell.detection.os.name", "nt")
     @patch(
-        "tutr.shell._resolve_executable",
+        "tutr.shell.detection._resolve_executable",
         side_effect=lambda value: {"pwsh": "C:/Program Files/PowerShell/7/pwsh.exe"}.get(value),
     )
     def test_detect_shell_prefers_pwsh_on_windows(self, _resolve):
