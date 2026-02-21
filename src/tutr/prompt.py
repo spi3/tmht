@@ -1,6 +1,7 @@
 """Prompt construction for tutr."""
 
 import json
+from typing import TypedDict
 
 from tutr.models import CommandResponse
 
@@ -18,7 +19,16 @@ Return **ONLY** valid JSON matching this schema:
 """
 
 
-def build_messages(cmd: str | None, query: str, context: str, system_info: str = "") -> list[dict]:
+class LLMMessage(TypedDict):
+    """Single chat message for the LLM API."""
+
+    role: str
+    content: str
+
+
+def build_messages(
+    cmd: str | None, query: str, context: str, system_info: str = ""
+) -> list[LLMMessage]:
     """Build the message list for the LLM call."""
     parts: list[str] = []
 

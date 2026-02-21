@@ -11,6 +11,17 @@ from tutr.models import ProviderInfo, TutrConfig
 
 log = logging.getLogger(__name__)
 
+__all__ = [
+    "CONFIG_DIR",
+    "CONFIG_FILE",
+    "DEFAULT_MODEL",
+    "PROVIDERS",
+    "TutrConfig",
+    "load_config",
+    "save_config",
+    "needs_setup",
+]
+
 CONFIG_DIR = Path.home() / ".tutr"
 CONFIG_FILE = CONFIG_DIR / "config.json"
 DEFAULT_MODEL = MODEL_DEFAULT_MODEL

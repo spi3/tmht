@@ -5,6 +5,7 @@ import shutil
 import sys
 import threading
 import time
+from typing import TextIO
 
 from tutr.context import get_available_commands
 
@@ -19,7 +20,7 @@ class WaitIndicator:
     def __init__(
         self,
         commands: list[str],
-        stream=None,
+        stream: TextIO | None = None,
         interval: float = SPINNER_INTERVAL_SECONDS,
         message_prefix: str = "Asking tutr... : ",
     ) -> None:

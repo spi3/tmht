@@ -10,6 +10,9 @@ import struct
 import sys
 import termios
 import tty
+from types import FrameType
+
+from tutr.config import TutrConfig
 
 from tutr.shell.constants import MARKER_RE, OUTPUT_BUFFER_SIZE
 from tutr.shell.detection import _build_shell_launch_config
@@ -17,7 +20,7 @@ from tutr.shell.shell import _ask_tutor, _prompt_auto_run, _should_ask_tutor, lo
 
 
 def _ask_tutor_with_cancel(
-    command: str, output: str, config, stdin_fd: int
+    command: str, output: str, config: TutrConfig, stdin_fd: int
 ) -> tuple[bytes, str | None]:
     """Run tutor query in a child process so Esc/Ctrl-C can cancel it."""
     read_fd, write_fd = os.pipe()
@@ -138,7 +141,7 @@ def shell_loop() -> int:
     os.close(slave_fd)
 
     # Forward window-resize signals to the child.
-    def _on_winch(_signum, _frame):
+    def _on_winch(_signum: int, _frame: FrameType | None) -> None:
         try:
             r, c, xp, yp = _winsize(sys.stdin.fileno())
             _set_winsize(master_fd, r, c, xp, yp)

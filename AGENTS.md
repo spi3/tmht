@@ -34,3 +34,4 @@ When an agent discovers new information, conventions, or workflow guidance that 
 
 - Prefer structured models (for example, Pydantic models) over untyped `dict` values for config and other cross-module data contracts whenever it makes sense.
 - Use `uv run poe check` as the default pre-merge validation command; it runs ruff lint, ruff format check, mypy, and pytest.
+- Keep `mypy` in strict mode for `src/`; for `tests/`, use `tool.mypy.overrides` to relax `disallow_untyped_defs`/`disallow_untyped_calls` when needed instead of weakening global strictness.
