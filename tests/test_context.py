@@ -5,7 +5,13 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from tmht.context import gather_context, get_help_output, get_man_page
+from tmht.context import (
+    _get_distro,
+    gather_context,
+    get_help_output,
+    get_man_page,
+    get_system_info,
+)
 
 
 def make_result(stdout="", stderr="", returncode=0):
@@ -205,3 +211,77 @@ class TestGatherContext:
     def test_returns_empty_string_when_cmd_is_none(self):
         result = gather_context(None)
         assert result == ""
+
+
+class TestGetDistro:
+    """Tests for _get_distro()."""
+
+    @patch("tmht.context.platform.system", return_value="Darwin")
+    @patch("tmht.context.platform.mac_ver", return_value=("14.2.1", ("", "", ""), ""))
+    def test_macos_with_version(self, mock_mac_ver, mock_system):
+        assert _get_distro() == "macOS 14.2.1"
+
+    @patch("tmht.context.platform.system", return_value="Darwin")
+    @patch("tmht.context.platform.mac_ver", return_value=("", ("", "", ""), ""))
+    def test_macos_without_version(self, mock_mac_ver, mock_system):
+        assert _get_distro() == "macOS"
+
+    @patch("tmht.context.platform.system", return_value="Linux")
+    @patch(
+        "tmht.context.platform.freedesktop_os_release",
+        return_value={"PRETTY_NAME": "Debian GNU/Linux 12 (bookworm)", "NAME": "Debian GNU/Linux"},
+    )
+    def test_linux_pretty_name(self, mock_os_release, mock_system):
+        assert _get_distro() == "Debian GNU/Linux 12 (bookworm)"
+
+    @patch("tmht.context.platform.system", return_value="Linux")
+    @patch(
+        "tmht.context.platform.freedesktop_os_release",
+        return_value={"NAME": "Fedora Linux"},
+    )
+    def test_linux_falls_back_to_name(self, mock_os_release, mock_system):
+        assert _get_distro() == "Fedora Linux"
+
+    @patch("tmht.context.platform.system", return_value="Linux")
+    @patch(
+        "tmht.context.platform.freedesktop_os_release",
+        side_effect=OSError("not found"),
+    )
+    def test_linux_falls_back_to_system_on_oserror(self, mock_os_release, mock_system):
+        assert _get_distro() == "Linux"
+
+
+class TestGetSystemInfo:
+    """Tests for get_system_info()."""
+
+    @patch("tmht.context._get_distro", return_value="Debian GNU/Linux 12 (bookworm)")
+    @patch("tmht.context.platform.release", return_value="6.1.0")
+    @patch.dict("os.environ", {"SHELL": "/bin/bash"})
+    def test_returns_distro_kernel_and_shell(self, mock_release, mock_distro):
+        result = get_system_info()
+        assert "OS: Debian GNU/Linux 12 (bookworm) (6.1.0)" in result
+        assert "Shell: /bin/bash" in result
+
+    @patch("tmht.context._get_distro", return_value="macOS 14.2.1")
+    @patch("tmht.context.platform.release", return_value="23.2.0")
+    @patch.dict("os.environ", {"SHELL": "/bin/zsh"})
+    def test_macos_with_zsh(self, mock_release, mock_distro):
+        result = get_system_info()
+        assert "OS: macOS 14.2.1 (23.2.0)" in result
+        assert "Shell: /bin/zsh" in result
+
+    @patch("tmht.context._get_distro", return_value="Linux")
+    @patch("tmht.context.platform.release", return_value="5.15.0")
+    @patch.dict("os.environ", {}, clear=True)
+    def test_unknown_shell_when_env_missing(self, mock_release, mock_distro):
+        result = get_system_info()
+        assert "Shell: unknown" in result
+
+    def test_returns_string(self):
+        result = get_system_info()
+        assert isinstance(result, str)
+
+    def test_contains_os_and_shell_labels(self):
+        result = get_system_info()
+        assert "OS:" in result
+        assert "Shell:" in result

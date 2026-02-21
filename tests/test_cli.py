@@ -41,6 +41,7 @@ def _cli_patches(**overrides):
         needs_setup=MagicMock(return_value=False),
         load_config=MagicMock(return_value={}),
         gather_context=MagicMock(return_value="ctx"),
+        get_system_info=MagicMock(return_value="OS: Linux 6.1.0\nShell: /bin/bash"),
         build_messages=MagicMock(return_value=[]),
         query_llm=MagicMock(return_value=_make_llm_result()),
     )

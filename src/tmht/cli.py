@@ -7,7 +7,7 @@ import sys
 
 from tmht import __version__
 from tmht.config import load_config, needs_setup
-from tmht.context import gather_context
+from tmht.context import gather_context, get_system_info
 from tmht.llm import query_llm
 from tmht.prompt import build_messages
 from tmht.setup import run_setup
@@ -59,7 +59,8 @@ def main(argv: list[str] | None = None) -> int:
     log.debug("cmd=%s query=%r", cmd, query)
 
     context = gather_context(cmd)
-    messages = build_messages(cmd, query, context)
+    system_info = get_system_info()
+    messages = build_messages(cmd, query, context, system_info)
 
     try:
         result = query_llm(messages, config)

@@ -151,6 +151,37 @@ class TestBuildMessages:
         assert result[1]["role"] == "user"
 
 
+class TestBuildMessagesWithSystemInfo:
+    """Tests for build_messages with system_info parameter."""
+
+    def test_system_info_included_in_user_message(self):
+        info = "OS: Linux 6.1.0\nShell: /bin/bash"
+        result = build_messages("git", "create a branch", "ctx", system_info=info)
+        assert "System:\nOS: Linux 6.1.0\nShell: /bin/bash" in result[1]["content"]
+
+    def test_system_info_appears_before_command(self):
+        info = "OS: Linux 6.1.0\nShell: /bin/bash"
+        result = build_messages("git", "create a branch", "ctx", system_info=info)
+        content = result[1]["content"]
+        assert content.index("System:") < content.index("Command:")
+
+    def test_system_info_with_no_command(self):
+        info = "OS: Darwin 23.1.0\nShell: /bin/zsh"
+        result = build_messages(None, "list files", "", system_info=info)
+        content = result[1]["content"]
+        assert "System:\n" in content
+        assert "What I want to do: list files" in content
+        assert "Command:" not in content
+
+    def test_empty_system_info_omitted(self):
+        result = build_messages("git", "query", "ctx", system_info="")
+        assert "System:" not in result[1]["content"]
+
+    def test_default_system_info_is_empty(self):
+        result = build_messages("git", "query", "ctx")
+        assert "System:" not in result[1]["content"]
+
+
 class TestSystemPrompt:
     """Tests for SYSTEM_PROMPT constant."""
 

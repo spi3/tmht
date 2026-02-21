@@ -2,6 +2,7 @@
 
 import logging
 import os
+import platform
 import subprocess
 
 log = logging.getLogger(__name__)
@@ -48,6 +49,27 @@ def get_man_page(cmd: str, max_lines: int = 200) -> str | None:
     except (subprocess.TimeoutExpired, FileNotFoundError) as e:
         log.debug("man %s failed: %s", cmd, e)
     return None
+
+
+def _get_distro() -> str:
+    """Return the OS distribution name (e.g. 'Debian GNU/Linux 12', 'macOS 14.0')."""
+    system = platform.system()
+    if system == "Darwin":
+        mac_ver = platform.mac_ver()[0]
+        return f"macOS {mac_ver}" if mac_ver else "macOS"
+    try:
+        info = platform.freedesktop_os_release()
+        return info.get("PRETTY_NAME", info.get("NAME", system))
+    except OSError:
+        return system
+
+
+def get_system_info() -> str:
+    """Return a summary of the operating system and shell."""
+    distro = _get_distro()
+    kernel = platform.release()
+    shell = os.environ.get("SHELL", "unknown")
+    return f"OS: {distro} ({kernel})\nShell: {shell}"
 
 
 def gather_context(cmd: str | None) -> str:
