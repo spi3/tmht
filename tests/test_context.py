@@ -8,6 +8,8 @@ import pytest
 from tutr.context import (
     _get_distro,
     gather_context,
+    get_available_commands,
+    get_available_commands_summary,
     get_help_output,
     get_man_page,
     get_system_info,
@@ -188,9 +190,27 @@ class TestGatherContext:
     def test_fallback_message_when_no_docs_found(self, mock_help, mock_man):
         mock_help.return_value = None
         mock_man.return_value = None
-        result = gather_context("unknowncmd")
+        with patch(
+            "tutr.context.get_available_commands_summary",
+            return_value="Available commands in PATH (2): curl, git",
+        ):
+            result = gather_context("unknowncmd")
         assert "No documentation found for 'unknowncmd'" in result
         assert "Rely on general knowledge" in result
+        assert "Available commands in PATH (2): curl, git" in result
+
+    @patch("tutr.context.get_available_commands_summary")
+    @patch("tutr.context.get_man_page")
+    @patch("tutr.context.get_help_output")
+    def test_does_not_include_available_commands_when_docs_exist(
+        self, mock_help, mock_man, mock_available
+    ):
+        mock_help.return_value = "help text"
+        mock_man.return_value = "man text"
+        result = gather_context("git")
+        assert "help text" in result
+        assert "man text" in result
+        mock_available.assert_not_called()
 
     @patch("tutr.context.get_man_page")
     @patch("tutr.context.get_help_output")
@@ -285,3 +305,95 @@ class TestGetSystemInfo:
         result = get_system_info()
         assert "OS:" in result
         assert "Shell:" in result
+        assert "Available commands in PATH" not in result
+
+
+class TestGetAvailableCommands:
+    """Tests for command discovery via PATH."""
+
+    @patch.dict("os.environ", {"PATH": "/bin:/usr/bin"})
+    @patch("tutr.context.os.access", return_value=True)
+    @patch("tutr.context.os.scandir")
+    def test_collects_and_sorts_unique_command_names(self, mock_scandir, mock_access):
+        bin_entries = [MagicMock(name="zsh"), MagicMock(name="git"), MagicMock(name=".hidden")]
+        for entry, name in zip(bin_entries, ["zsh", "git", ".hidden"]):
+            entry.name = name
+            entry.path = f"/bin/{name}"
+
+        usr_entries = [MagicMock(name="git"), MagicMock(name="python3")]
+        for entry, name in zip(usr_entries, ["git", "python3"]):
+            entry.name = name
+            entry.path = f"/usr/bin/{name}"
+
+        cm1 = MagicMock()
+        cm1.__enter__.return_value = iter(bin_entries)
+        cm1.__exit__.return_value = None
+        cm2 = MagicMock()
+        cm2.__enter__.return_value = iter(usr_entries)
+        cm2.__exit__.return_value = None
+        mock_scandir.side_effect = [cm1, cm2]
+
+        commands, total = get_available_commands()
+        assert commands == ["git", "python3", "zsh"]
+        assert total == 3
+        assert mock_access.call_count == 4
+
+    @patch.dict("os.environ", {"PATH": ""}, clear=True)
+    def test_returns_empty_when_path_missing(self):
+        commands, total = get_available_commands()
+        assert commands == []
+        assert total == 0
+
+    @patch.dict("os.environ", {"PATH": "/bin"})
+    @patch("tutr.context.os.access", return_value=True)
+    @patch("tutr.context.os.scandir")
+    def test_respects_max_commands(self, mock_scandir, mock_access):
+        entries = []
+        for name in ("cmd1", "cmd2", "cmd3"):
+            entry = MagicMock()
+            entry.name = name
+            entry.path = f"/bin/{name}"
+            entries.append(entry)
+        cm = MagicMock()
+        cm.__enter__.return_value = iter(entries)
+        cm.__exit__.return_value = None
+        mock_scandir.return_value = cm
+
+        commands, total = get_available_commands(max_commands=2)
+        assert commands == ["cmd1", "cmd2"]
+        assert total == 3
+
+    @patch.dict("os.environ", {"PATH": "/missing:/bin"})
+    @patch("tutr.context.os.access", return_value=True)
+    @patch("tutr.context.os.scandir")
+    def test_skips_unreadable_path_entries(self, mock_scandir, mock_access):
+        entry = MagicMock()
+        entry.name = "ls"
+        entry.path = "/bin/ls"
+        cm = MagicMock()
+        cm.__enter__.return_value = iter([entry])
+        cm.__exit__.return_value = None
+        mock_scandir.side_effect = [OSError("no access"), cm]
+
+        commands, total = get_available_commands()
+        assert commands == ["ls"]
+        assert total == 1
+
+
+class TestGetAvailableCommandsSummary:
+    """Tests for compact command list formatting."""
+
+    @patch("tutr.context.get_available_commands", return_value=([], 0))
+    def test_unavailable_when_no_commands(self, mock_get):
+        result = get_available_commands_summary()
+        assert result == "Available commands in PATH: unavailable"
+
+    @patch("tutr.context.get_available_commands", return_value=(["curl", "git"], 2))
+    def test_includes_total_when_not_truncated(self, mock_get):
+        result = get_available_commands_summary()
+        assert result == "Available commands in PATH (2): curl, git"
+
+    @patch("tutr.context.get_available_commands", return_value=(["curl", "git"], 5))
+    def test_shows_visible_and_total_when_truncated(self, mock_get):
+        result = get_available_commands_summary()
+        assert result == "Available commands in PATH (showing 2 of 5): curl, git"

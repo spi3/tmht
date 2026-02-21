@@ -4,6 +4,7 @@ import logging
 import os
 import platform
 import subprocess
+from collections.abc import Iterable
 
 log = logging.getLogger(__name__)
 
@@ -64,6 +65,60 @@ def _get_distro() -> str:
         return system
 
 
+def _iter_path_dirs(path_env: str) -> Iterable[str]:
+    """Yield unique PATH directories in order."""
+    seen: set[str] = set()
+    for raw_dir in path_env.split(os.pathsep):
+        path_dir = raw_dir.strip()
+        if not path_dir:
+            continue
+        normalized = os.path.normpath(path_dir)
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        yield normalized
+
+
+def get_available_commands(max_commands: int = 400) -> tuple[list[str], int]:
+    """Return a sorted list of executable command names discoverable via PATH."""
+    path_env = os.environ.get("PATH", "")
+    if not path_env:
+        return [], 0
+
+    names: set[str] = set()
+    for path_dir in _iter_path_dirs(path_env):
+        try:
+            with os.scandir(path_dir) as entries:
+                for entry in entries:
+                    # Keep only executable files/symlinks that can be launched by name.
+                    if entry.name.startswith("."):
+                        continue
+                    if os.access(entry.path, os.X_OK):
+                        names.add(entry.name)
+        except OSError:
+            continue
+
+    sorted_names = sorted(names)
+    total = len(sorted_names)
+    if total > max_commands:
+        return sorted_names[:max_commands], total
+    return sorted_names, total
+
+
+def get_available_commands_summary(max_commands: int = 400) -> str:
+    """Return a compact, prompt-safe summary of installed commands."""
+    commands, total = get_available_commands(max_commands=max_commands)
+    if not commands:
+        return "Available commands in PATH: unavailable"
+    visible = len(commands)
+    if total > visible:
+        return (
+            f"Available commands in PATH (showing {visible} of {total}): "
+            + ", ".join(commands)
+        )
+    return f"Available commands in PATH ({total}): " + ", ".join(commands)
+
+
 def get_system_info() -> str:
     """Return a summary of the operating system and shell."""
     distro = _get_distro()
@@ -91,6 +146,7 @@ def gather_context(cmd: str | None) -> str:
     if not parts:
         log.debug("no docs found for %s", cmd)
         parts.append(f"No documentation found for '{cmd}'. Rely on general knowledge.")
+        parts.append(get_available_commands_summary())
 
     context = "\n\n".join(parts)
     log.debug("total context: %d chars", len(context))
