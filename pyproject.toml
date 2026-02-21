@@ -23,6 +23,9 @@ build-backend = "uv_build"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "integration: live integration tests that call real external/local LLM systems",
+]
 
 [dependency-groups]
 dev = [
