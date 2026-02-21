@@ -28,6 +28,12 @@ def main(argv: list[str] | None = None) -> int:
         help="Enable debug logging",
     )
     parser.add_argument(
+        "-e",
+        "--explain",
+        action="store_true",
+        help="Show the LLM explanation for generated commands",
+    )
+    parser.add_argument(
         "words",
         nargs="+",
         metavar="command/query",
@@ -45,6 +51,8 @@ def main(argv: list[str] | None = None) -> int:
         config = run_setup()
     else:
         config = load_config()
+    if args.explain:
+        config.show_explanation = True
 
     try:
         result = run(args.words, config)
@@ -53,6 +61,11 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     print(f"\n  {result.command}\n")
+    if config.show_explanation:
+        if result.explanation.strip():
+            print(f"  {result.explanation}\n")
+        if result.source and result.source.strip():
+            print(f"  source: {result.source}\n")
 
     return 0
 

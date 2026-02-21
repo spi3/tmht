@@ -31,8 +31,13 @@ def _ask_tutor(cmd: str, output: str, config: TutrConfig) -> tuple[bytes, str | 
         query += f"\n\nTerminal output:\n{output}"
     try:
         result = run(query.split(), config)
-        msg = f"\r\n{BOLD}tutr suggests:{RESET}\r\n  {result.command}\r\n".encode()
-        return msg, result.command
+        msg = f"\r\n{BOLD}tutr suggests:{RESET}\r\n  {result.command}\r\n"
+        if config.show_explanation:
+            if result.explanation.strip():
+                msg += f"  {result.explanation}\r\n"
+            if result.source and result.source.strip():
+                msg += f"  source: {result.source}\r\n"
+        return msg.encode(), result.command
     except Exception as e:
         return f"\r\n{RED}tutr error: {e}{RESET}\r\n".encode(), None
 

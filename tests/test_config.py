@@ -49,6 +49,14 @@ class TestLoadConfig:
         assert result.model == "openai/gpt-4o"
         assert result.provider == "openai"
 
+    def test_loads_show_explanation_from_file(self, config_dir, config_file):
+        config_dir.mkdir(parents=True)
+        config_file.write_text(json.dumps({"show_explanation": True}))
+
+        result = load_config()
+
+        assert result.show_explanation is True
+
     def test_tutr_model_env_overrides_file(self, config_dir, config_file, monkeypatch):
         config_dir.mkdir(parents=True)
         config_file.write_text(json.dumps({"model": "openai/gpt-4o"}))
@@ -159,7 +167,12 @@ class TestSaveConfig:
         assert config_dir.is_dir()
 
     def test_writes_json_to_config_file(self, config_file):
-        payload = TutrConfig(model="test/model", provider="openai", api_key="my-key")
+        payload = TutrConfig(
+            model="test/model",
+            provider="openai",
+            api_key="my-key",
+            show_explanation=True,
+        )
 
         save_config(payload)
 

@@ -1,4 +1,4 @@
-# tutr — Terminal Utility for Con(T)extual Responses
+# tutr - Terminal Utility for Con(T)extual Responses
 
 A stupid simple, AI-powered terminal assistant that generates commands from natural language.
 
@@ -88,6 +88,7 @@ tutr curl "http://example.com and display all request headers"
 | `-h, --help` | Show help message |
 | `-V, --version` | Show version |
 | `-d, --debug` | Enable debug logging |
+| `-e, --explain` | Show LLM explanation and source for the generated command |
 
 ## Configuration
 
@@ -99,6 +100,14 @@ Config is stored in `~/.tutr/config.json`. Environment variables override the co
 | `GEMINI_API_KEY` | Gemini API key | — |
 | `ANTHROPIC_API_KEY` | Anthropic API key | — |
 | `OPENAI_API_KEY` | OpenAI API key | — |
+
+You can also enable command explanations persistently in `~/.tutr/config.json`:
+
+```json
+{
+  "show_explanation": true
+}
+```
 
 To re-run setup, delete the config file:
 

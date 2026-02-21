@@ -3,12 +3,13 @@
 import os
 import threading
 import time
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from tutr.config import TutrConfig
 from tutr.shell import _is_auto_run_accepted, _should_ask_tutor
 from tutr.shell import _classify_shell, _detect_shell, _shell_candidates
 from tutr.shell.loop import _ask_tutor_with_cancel
+from tutr.shell.shell import _ask_tutor
 
 
 class TestShouldAskTutor:
@@ -137,3 +138,28 @@ class TestCancelableTutorInvocation:
 
         assert suggestion == b"hello"
         assert command == "echo hi"
+
+
+class TestAskTutorMessageFormatting:
+    def test_includes_explanation_when_enabled(self):
+        config = TutrConfig(show_explanation=True)
+        result = MagicMock(command="ls -la", explanation="Lists all files.", source="man ls")
+        with patch("tutr.shell.shell.run", return_value=result):
+            msg, command = _ask_tutor("bad cmd", "error output", config)
+
+        text = msg.decode()
+        assert "ls -la" in text
+        assert "Lists all files." in text
+        assert "source: man ls" in text
+        assert command == "ls -la"
+
+    def test_omits_explanation_when_disabled(self):
+        config = TutrConfig(show_explanation=False)
+        result = MagicMock(command="ls -la", explanation="Lists all files.", source="man ls")
+        with patch("tutr.shell.shell.run", return_value=result):
+            msg, _ = _ask_tutor("bad cmd", "error output", config)
+
+        text = msg.decode()
+        assert "ls -la" in text
+        assert "Lists all files." not in text
+        assert "source: man ls" not in text

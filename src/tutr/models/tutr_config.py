@@ -12,3 +12,4 @@ class TutrConfig(BaseModel):
     provider: str | None = None
     model: str = DEFAULT_MODEL
     api_key: str | None = None
+    show_explanation: bool | None = None
