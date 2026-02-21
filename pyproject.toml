@@ -35,9 +35,7 @@ Issues = "https://github.com/spi3/tutr/issues"
 
 [project.scripts]
 tutr = "tutr.shell:entrypoint"
-test = "pytest:main"
-shell = "tutr.shell:entrypoint"
-cli = "tutr.cli:entrypoint"
+tutr-cli = "tutr.cli:entrypoint"
 
 [build-system]
 requires = ["uv_build>=0.9.9,<0.10.0"]
