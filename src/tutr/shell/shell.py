@@ -4,7 +4,7 @@ import os
 
 from tutr.config import TutrConfig, load_config, needs_setup
 from tutr.constants import BOLD, CYAN, RED, RESET
-from tutr.setup import run_setup
+from tutr.cli.wizard import run_setup
 from tutr.tutr import run
 
 

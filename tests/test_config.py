@@ -110,6 +110,16 @@ class TestLoadConfig:
         result = load_config()
 
         assert result.api_key is None
+        assert result.ollama_host == "http://localhost:11434"
+
+    def test_ollama_host_env_override(self, config_dir, config_file, monkeypatch):
+        config_dir.mkdir(parents=True)
+        config_file.write_text(json.dumps({"provider": "ollama"}))
+        monkeypatch.setenv("OLLAMA_HOST", "http://ollama.internal:11434")
+
+        result = load_config()
+
+        assert result.ollama_host == "http://ollama.internal:11434"
 
     def test_gemini_provider_api_key_override(self, config_dir, config_file, monkeypatch):
         config_dir.mkdir(parents=True)
@@ -171,6 +181,7 @@ class TestSaveConfig:
             model="test/model",
             provider="openai",
             api_key="my-key",
+            ollama_host="http://localhost:11434",
             show_explanation=True,
         )
 

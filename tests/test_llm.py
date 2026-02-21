@@ -145,6 +145,31 @@ class TestQueryLlmConfig:
         assert call_kwargs["temperature"] == 0
         assert call_kwargs["max_tokens"] == 256
 
+    def test_ollama_model_sets_api_base(self):
+        payload = json.dumps({"command": "echo hi"})
+        with patch(
+            "tutr.llm.litellm.completion", return_value=make_mock_response(payload)
+        ) as mock_completion:
+            query_llm(
+                MESSAGES,
+                config=TutrConfig(
+                    provider="ollama",
+                    model="ollama/llama3",
+                    ollama_host="http://127.0.0.1:11434",
+                ),
+            )
+        call_kwargs = mock_completion.call_args.kwargs
+        assert call_kwargs["api_base"] == "http://127.0.0.1:11434"
+
+    def test_ollama_model_uses_default_api_base(self):
+        payload = json.dumps({"command": "echo hi"})
+        with patch(
+            "tutr.llm.litellm.completion", return_value=make_mock_response(payload)
+        ) as mock_completion:
+            query_llm(MESSAGES, config=TutrConfig(provider="ollama", model="ollama/llama3"))
+        call_kwargs = mock_completion.call_args.kwargs
+        assert call_kwargs["api_base"] == "http://localhost:11434"
+
 
 class TestQueryLlmExceptions:
     """Tests for exception propagation from litellm."""

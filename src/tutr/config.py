@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from tutr.models import DEFAULT_MODEL as MODEL_DEFAULT_MODEL
+from tutr.models import DEFAULT_OLLAMA_HOST as MODEL_DEFAULT_OLLAMA_HOST
 from tutr.models import ProviderInfo, TutrConfig
 
 log = logging.getLogger(__name__)
@@ -15,6 +16,7 @@ __all__ = [
     "CONFIG_DIR",
     "CONFIG_FILE",
     "DEFAULT_MODEL",
+    "DEFAULT_OLLAMA_HOST",
     "PROVIDERS",
     "TutrConfig",
     "load_config",
@@ -25,6 +27,7 @@ __all__ = [
 CONFIG_DIR = Path.home() / ".tutr"
 CONFIG_FILE = CONFIG_DIR / "config.json"
 DEFAULT_MODEL = MODEL_DEFAULT_MODEL
+DEFAULT_OLLAMA_HOST = MODEL_DEFAULT_OLLAMA_HOST
 
 PROVIDERS: dict[str, ProviderInfo] = {
     "gemini": {"env_key": "GEMINI_API_KEY", "label": "Gemini"},
@@ -56,6 +59,11 @@ def load_config() -> TutrConfig:
         env_key = PROVIDERS[provider]["env_key"]
         if env_key and (api_key := os.environ.get(env_key)):
             config.api_key = api_key
+        if provider == "ollama":
+            if ollama_host := os.environ.get("OLLAMA_HOST"):
+                config.ollama_host = ollama_host
+            elif not config.ollama_host:
+                config.ollama_host = DEFAULT_OLLAMA_HOST
 
     return config
 

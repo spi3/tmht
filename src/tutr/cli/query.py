@@ -1,35 +1,19 @@
-"""Command-line interface for tutr."""
+"""One-shot query CLI implementation."""
 
 import argparse
 import logging
-import os
 import sys
 
 from tutr import __version__
+from tutr.cli.shared import format_suggested_command
+from tutr.cli.wizard import run_setup
 from tutr.config import load_config, needs_setup
-from tutr.constants import BOLD, CYAN, RESET
-from tutr.setup import run_setup
-from tutr.tutr import run
+from tutr.tutr import run as query_llm
 from tutr.update_check import notify_if_update_available
 
 
-def _supports_color() -> bool:
-    """Return whether ANSI color output should be used."""
-    if os.getenv("NO_COLOR") is not None:
-        return False
-    if os.getenv("TERM", "").lower() == "dumb":
-        return False
-    return sys.stdout.isatty()
-
-
-def _format_suggested_command(command: str) -> str:
-    """Return a shell-like prompt line for the suggested command."""
-    if _supports_color():
-        return f"{BOLD}{CYAN}$ {command}{RESET}"
-    return f"$ {command}"
-
-
-def main(argv: list[str] | None = None) -> int:
+def build_parser() -> argparse.ArgumentParser:
+    """Build parser for one-shot query mode."""
     parser = argparse.ArgumentParser(
         prog="tutr",
         description="Tell Me How To — AI-powered terminal command assistant",
@@ -40,12 +24,7 @@ def main(argv: list[str] | None = None) -> int:
         action="version",
         version=f"%(prog)s {__version__}",
     )
-    parser.add_argument(
-        "-d",
-        "--debug",
-        action="store_true",
-        help="Enable debug logging",
-    )
+    parser.add_argument("-d", "--debug", action="store_true", help="Enable debug logging")
     parser.add_argument(
         "-e",
         "--explain",
@@ -58,10 +37,15 @@ def main(argv: list[str] | None = None) -> int:
         metavar="command/query",
         help="A command followed by a query, or just a natural-language query",
     )
+    return parser
 
+
+def run(argv: list[str]) -> int:
+    """Execute one-shot query mode."""
+    parser = build_parser()
     args = parser.parse_args(argv)
-    notify_if_update_available(__version__)
 
+    notify_if_update_available(__version__)
     logging.basicConfig(
         level=logging.DEBUG if args.debug else logging.WARNING,
         format="%(name)s %(levelname)s: %(message)s",
@@ -75,12 +59,12 @@ def main(argv: list[str] | None = None) -> int:
         config.show_explanation = True
 
     try:
-        result = run(args.words, config)
+        result = query_llm(args.words, config)
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1
 
-    print(f"\n  {_format_suggested_command(result.command)}\n")
+    print(f"\n  {format_suggested_command(result.command)}\n")
     if config.show_explanation:
         if result.explanation.strip():
             print(f"  {result.explanation}\n")
@@ -88,7 +72,3 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  source: {result.source}\n")
 
     return 0
-
-
-def entrypoint() -> None:
-    raise SystemExit(main())

@@ -25,7 +25,11 @@ git config core.hooksPath .githooks  # Enable repo-managed git hooks
 
 Python CLI tool using `uv` (with `uv_build` backend) and `src/` layout.
 
-- **Entry point**: `src/tutr/cli.py` — `entrypoint()` is registered as `[project.scripts] tutr` in `pyproject.toml`. `main(argv)` contains the argparse logic and returns an exit code.
+- **One-shot CLI entry point**: `src/tutr/cli/` package (`[project.scripts] tutr-cli` via `tutr.cli:entrypoint`).
+  - `app.py` routes top-level commands.
+  - `query.py` handles natural-language command generation mode.
+  - `configure.py` handles `tutr-cli configure`.
+  - `wizard.py` contains interactive setup/config flows (`run_setup`, `run_configure`).
 - **Interactive shell wrapper**: `src/tutr/shell/` package (`[project.scripts] shell` via `tutr.shell:entrypoint`) contains the PTY loop (`loop.py`), shell detection/launch config (`detection.py`), startup hook writers (`hooks.py`), and tutor prompt logic (`tutor.py`). `TUTR_SHELL` can override detection.
 - **`__main__.py`**: enables `python -m tutr` invocation.
 - **Version**: keep `project.version` in `pyproject.toml` and `__version__` in `src/tutr/__init__.py` in sync.
@@ -41,5 +45,7 @@ When an agent discovers new information, conventions, or workflow guidance that 
 - Keep `mypy` in strict mode for `src/`; for `tests/`, use `tool.mypy.overrides` to relax `disallow_untyped_defs`/`disallow_untyped_calls` when needed instead of weakening global strictness.
 - The repository pre-commit hook lives at `.githooks/pre-commit` and runs `uv run poe check`; enable it locally with `git config core.hooksPath .githooks`.
 - Live integration tests are opt-in and require env vars: run with `TUTR_RUN_INTEGRATION=1 uv run pytest -q -m integration` and set `TUTR_INTEGRATION_MODEL` (or `TUTR_MODEL`) plus either `TUTR_INTEGRATION_API_KEY` or the provider-specific API key env var.
+- Ollama configuration uses `ollama_host` in `TutrConfig` and supports `OLLAMA_HOST` env override; default host is `http://localhost:11434`.
 - For releases, build and validate artifacts with `uv run poe dist` before any upload, then publish with `uv run poe publish_testpypi` and `uv run poe publish_pypi` using `TWINE_USERNAME=__token__` and an API token in `TWINE_PASSWORD`.
 - When documenting shell rc auto-start for `tutr`, always include a recursion guard env var (for example `TUTR_AUTOSTARTED`) because the wrapper shell sources the user's rc file.
+- The shell wrapper launch config sets both `TUTR_ACTIVE=1` and `TUTR_AUTOSTARTED=1` for the child shell environment to prevent recursive auto-start.

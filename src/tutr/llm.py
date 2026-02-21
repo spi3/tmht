@@ -8,7 +8,7 @@ import litellm
 log = logging.getLogger(__name__)
 from pydantic import ValidationError
 
-from tutr.config import TutrConfig
+from tutr.config import DEFAULT_OLLAMA_HOST, TutrConfig
 from tutr.models import CommandResponse
 from tutr.prompt import LLMMessage
 from tutr.wait_indicator import build_llm_wait_indicator
@@ -33,6 +33,8 @@ def query_llm(messages: list[LLMMessage], config: TutrConfig | None = None) -> C
     }
     if api_key:
         kwargs["api_key"] = api_key
+    if model.startswith("ollama/"):
+        kwargs["api_base"] = config.ollama_host or DEFAULT_OLLAMA_HOST
 
     indicator = build_llm_wait_indicator()
     indicator.start()

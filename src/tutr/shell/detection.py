@@ -78,6 +78,8 @@ def _build_shell_launch_config() -> ShellLaunchConfig:
     kind, executable = _detect_shell()
     env = dict(os.environ)
     env["TUTR_ACTIVE"] = "1"
+    # Prevent rc-file auto-start snippets from recursively launching tutr.
+    env["TUTR_AUTOSTARTED"] = "1"
 
     if kind == "bash":
         rcfile = write_bash_rcfile()

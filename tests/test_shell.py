@@ -235,3 +235,4 @@ class TestShellLaunchEnv:
     def test_launch_env_sets_tutr_active(self, _write, _detect):
         launch = _build_shell_launch_config()
         assert launch.env.get("TUTR_ACTIVE") == "1"
+        assert launch.env.get("TUTR_AUTOSTARTED") == "1"

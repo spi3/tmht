@@ -72,6 +72,12 @@ Configuration saved to ~/.tutr/config.json
 
 Setup is skipped if `~/.tutr/config.json` already exists or provider API key environment variables are set.
 
+To re-run or modify configuration at any time:
+
+```bash
+tutr-cli configure
+```
+
 ## Usage
 
 ```
@@ -132,6 +138,25 @@ tutr curl "http://example.com and display all request headers"
 | `-d, --debug` | Enable debug logging |
 | `-e, --explain` | Show LLM explanation and source for the generated command |
 
+## Configure Command
+
+Use `configure` to update provider/model selection and config flags.
+
+Interactive wizard:
+
+```bash
+tutr-cli configure
+```
+
+Non-interactive examples:
+
+```bash
+tutr-cli configure --provider openai --model openai/gpt-4o --show-explanation
+tutr-cli configure --provider anthropic --model anthropic/claude-sonnet-4-6
+tutr-cli configure --provider ollama --ollama-host http://localhost:11434
+tutr-cli configure --clear-api-key
+```
+
 ## Configuration
 
 Config is stored in `~/.tutr/config.json`. Environment variables override the config file.
@@ -142,20 +167,9 @@ Config is stored in `~/.tutr/config.json`. Environment variables override the co
 | `GEMINI_API_KEY` | Gemini API key | — |
 | `ANTHROPIC_API_KEY` | Anthropic API key | — |
 | `OPENAI_API_KEY` | OpenAI API key | — |
+| `OLLAMA_HOST` | Ollama host URL override | `http://localhost:11434` |
 
-You can also enable command explanations persistently in `~/.tutr/config.json`:
-
-```json
-{
-  "show_explanation": true
-}
-```
-
-To re-run setup, delete the config file:
-
-```bash
-rm ~/.tutr/config.json
-```
+You can edit settings with `tutr-cli configure` or directly in `~/.tutr/config.json`.
 
 ## Development
 
