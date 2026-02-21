@@ -10,6 +10,7 @@ from tutr.config import load_config, needs_setup
 from tutr.constants import BOLD, CYAN, RESET
 from tutr.setup import run_setup
 from tutr.tutr import run
+from tutr.update_check import notify_if_update_available
 
 
 def _supports_color() -> bool:
@@ -59,6 +60,7 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     args = parser.parse_args(argv)
+    notify_if_update_available(__version__)
 
     logging.basicConfig(
         level=logging.DEBUG if args.debug else logging.WARNING,

@@ -25,6 +25,7 @@ def _cli_patches(**overrides):
         load_config=MagicMock(return_value=TutrConfig()),
         run_setup=MagicMock(return_value=TutrConfig()),
         run=MagicMock(return_value=_make_llm_result()),
+        notify_if_update_available=MagicMock(),
     )
     defaults.update(overrides)
     return patch.multiple("tutr.cli", **defaults)

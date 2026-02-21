@@ -8,6 +8,8 @@ from tutr.shell.detection import (
 )
 from tutr.shell.loop import shell_loop
 from tutr.shell.shell import _is_auto_run_accepted, _should_ask_tutor
+from tutr.update_check import notify_if_update_available
+from tutr import __version__
 
 
 __all__ = [
@@ -23,4 +25,5 @@ __all__ = [
 
 
 def entrypoint() -> None:
+    notify_if_update_available(__version__)
     raise SystemExit(shell_loop())

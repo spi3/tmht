@@ -1,6 +1,7 @@
 """Unit tests for tutr.shell."""
 
 import os
+import sys
 import threading
 import time
 from unittest.mock import MagicMock, patch
@@ -163,3 +164,18 @@ class TestAskTutorMessageFormatting:
         assert "ls -la" in text
         assert "Lists all files." not in text
         assert "source: man ls" not in text
+
+
+class TestShellEntrypoint:
+    def test_entrypoint_checks_for_updates_before_shell_loop(self):
+        with patch("tutr.shell.notify_if_update_available") as mock_update:
+            with patch("tutr.shell.shell_loop", return_value=0):
+                with patch.object(sys, "argv", ["tutr"]):
+                    try:
+                        from tutr.shell import entrypoint
+
+                        entrypoint()
+                    except SystemExit as exc:
+                        assert exc.code == 0
+
+        mock_update.assert_called_once()
