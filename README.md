@@ -1,11 +1,21 @@
-# tutr — Tell Me How To
+# tutr — Terminal Utility for Con(T)extual Responses
 
 A stupid simple, AI-powered terminal assistant that generates commands from natural language.
 
-```
-$ tutr git create and switch to a new branch called testing
+## What does it do?
+
+Generates terminal commands from natural language queries.
+
+``` bash
+> tutr git create and switch to a new branch called testing
 
   git checkout -b testing
+```
+
+``` bash
+> tutr go back to the previous directory
+
+  cd -
 ```
 
 ## Installation
