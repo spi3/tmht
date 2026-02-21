@@ -9,6 +9,10 @@ uv sync              # Install/update project and dependencies
 uv run tutr          # Run the CLI
 uv run tutr -V       # Print version
 uv run python -m tutr  # Run as module
+uv run poe check     # Run lint, format check, type-check, and tests
+uv run ruff check .  # Lint
+uv run ruff format . # Format
+uv run mypy          # Type-check
 uv add <pkg>         # Add a dependency
 uv build             # Build wheel + sdist into dist/
 ```
@@ -29,3 +33,4 @@ When an agent discovers new information, conventions, or workflow guidance that 
 ## Conventions
 
 - Prefer structured models (for example, Pydantic models) over untyped `dict` values for config and other cross-module data contracts whenever it makes sense.
+- Use `uv run poe check` as the default pre-merge validation command; it runs ruff lint, ruff format check, mypy, and pytest.

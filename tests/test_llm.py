@@ -86,7 +86,9 @@ class TestQueryLlmConfig:
     def test_none_config_uses_default_model(self):
         """Passing config=None uses DEFAULT_MODEL."""
         payload = json.dumps({"command": "echo hi"})
-        with patch("tutr.llm.litellm.completion", return_value=make_mock_response(payload)) as mock_completion:
+        with patch(
+            "tutr.llm.litellm.completion", return_value=make_mock_response(payload)
+        ) as mock_completion:
             query_llm(MESSAGES, config=None)
         call_kwargs = mock_completion.call_args.kwargs
         assert call_kwargs["model"] == DEFAULT_MODEL
@@ -94,7 +96,9 @@ class TestQueryLlmConfig:
     def test_empty_config_uses_default_model(self):
         """Passing an empty TutrConfig uses DEFAULT_MODEL."""
         payload = json.dumps({"command": "echo hi"})
-        with patch("tutr.llm.litellm.completion", return_value=make_mock_response(payload)) as mock_completion:
+        with patch(
+            "tutr.llm.litellm.completion", return_value=make_mock_response(payload)
+        ) as mock_completion:
             query_llm(MESSAGES, config=TutrConfig())
         call_kwargs = mock_completion.call_args.kwargs
         assert call_kwargs["model"] == DEFAULT_MODEL
@@ -103,7 +107,9 @@ class TestQueryLlmConfig:
         """A model specified in config overrides DEFAULT_MODEL."""
         payload = json.dumps({"command": "echo hi"})
         custom_model = "anthropic/claude-3-haiku"
-        with patch("tutr.llm.litellm.completion", return_value=make_mock_response(payload)) as mock_completion:
+        with patch(
+            "tutr.llm.litellm.completion", return_value=make_mock_response(payload)
+        ) as mock_completion:
             query_llm(MESSAGES, config=TutrConfig(model=custom_model))
         call_kwargs = mock_completion.call_args.kwargs
         assert call_kwargs["model"] == custom_model
@@ -111,7 +117,9 @@ class TestQueryLlmConfig:
     def test_config_api_key_passed_through(self):
         """An api_key in config is forwarded to litellm.completion."""
         payload = json.dumps({"command": "echo hi"})
-        with patch("tutr.llm.litellm.completion", return_value=make_mock_response(payload)) as mock_completion:
+        with patch(
+            "tutr.llm.litellm.completion", return_value=make_mock_response(payload)
+        ) as mock_completion:
             query_llm(MESSAGES, config=TutrConfig(api_key="sk-test-123"))
         call_kwargs = mock_completion.call_args.kwargs
         assert call_kwargs["api_key"] == "sk-test-123"
@@ -119,7 +127,9 @@ class TestQueryLlmConfig:
     def test_no_api_key_in_config_omits_kwarg(self):
         """When api_key is absent from config, it is not forwarded to litellm."""
         payload = json.dumps({"command": "echo hi"})
-        with patch("tutr.llm.litellm.completion", return_value=make_mock_response(payload)) as mock_completion:
+        with patch(
+            "tutr.llm.litellm.completion", return_value=make_mock_response(payload)
+        ) as mock_completion:
             query_llm(MESSAGES, config=TutrConfig())
         call_kwargs = mock_completion.call_args.kwargs
         assert "api_key" not in call_kwargs
@@ -127,7 +137,9 @@ class TestQueryLlmConfig:
     def test_fixed_temperature_and_max_tokens(self):
         """temperature=0 and max_tokens=256 are always sent regardless of config."""
         payload = json.dumps({"command": "echo hi"})
-        with patch("tutr.llm.litellm.completion", return_value=make_mock_response(payload)) as mock_completion:
+        with patch(
+            "tutr.llm.litellm.completion", return_value=make_mock_response(payload)
+        ) as mock_completion:
             query_llm(MESSAGES, config=TutrConfig())
         call_kwargs = mock_completion.call_args.kwargs
         assert call_kwargs["temperature"] == 0

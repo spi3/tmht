@@ -1,8 +1,6 @@
 """Unit tests for tutr.setup."""
 
-from unittest.mock import call, patch
-
-import pytest
+from unittest.mock import patch
 
 from tutr.config import TutrConfig
 from tutr.setup import _prompt_choice, run_setup
@@ -27,7 +25,10 @@ class TestPromptChoice:
             assert _prompt_choice(3) == 3
 
     def test_invalid_then_valid_retries(self):
-        with patch("builtins.input", side_effect=["abc", "2"]), patch("builtins.print") as mock_print:
+        with (
+            patch("builtins.input", side_effect=["abc", "2"]),
+            patch("builtins.print") as mock_print,
+        ):
             result = _prompt_choice(3)
         assert result == 2
         # Error message printed at least once
@@ -40,7 +41,10 @@ class TestPromptChoice:
         assert any("Please enter a number" in str(c) for c in mock_print.call_args_list)
 
     def test_out_of_range_high_retries(self):
-        with patch("builtins.input", side_effect=["99", "2"]), patch("builtins.print") as mock_print:
+        with (
+            patch("builtins.input", side_effect=["99", "2"]),
+            patch("builtins.print") as mock_print,
+        ):
             result = _prompt_choice(3)
         assert result == 2
         assert any("Please enter a number" in str(c) for c in mock_print.call_args_list)
@@ -50,7 +54,10 @@ class TestPromptChoice:
             assert _prompt_choice(2) == 1
 
     def test_multiple_bad_inputs_then_valid(self):
-        with patch("builtins.input", side_effect=["x", "0", EOFError, "3"]), patch("builtins.print"):
+        with (
+            patch("builtins.input", side_effect=["x", "0", EOFError, "3"]),
+            patch("builtins.print"),
+        ):
             assert _prompt_choice(3) == 3
 
     def test_max_val_one_accepts_only_1(self):
@@ -84,9 +91,13 @@ class TestRunSetupGeminiWithApiKey:
             result = run_setup()
 
         mock_save.assert_called_once_with(
-            TutrConfig(provider="gemini", model="gemini/gemini-3-flash-preview", api_key="my-api-key")
+            TutrConfig(
+                provider="gemini", model="gemini/gemini-3-flash-preview", api_key="my-api-key"
+            )
         )
-        assert result == TutrConfig(provider="gemini", model="gemini/gemini-3-flash-preview", api_key="my-api-key")
+        assert result == TutrConfig(
+            provider="gemini", model="gemini/gemini-3-flash-preview", api_key="my-api-key"
+        )
 
     def test_selects_non_default_model(self):
         inputs = ["1", "2"]  # provider=gemini, model=gemini-2.0-flash
@@ -99,7 +110,9 @@ class TestRunSetupGeminiWithApiKey:
         ):
             result = run_setup()
 
-        mock_save.assert_called_once_with(TutrConfig(provider="gemini", model="gemini/gemini-2.0-flash", api_key="key-abc"))
+        mock_save.assert_called_once_with(
+            TutrConfig(provider="gemini", model="gemini/gemini-2.0-flash", api_key="key-abc")
+        )
         assert result.model == "gemini/gemini-2.0-flash"
 
 

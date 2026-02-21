@@ -2,7 +2,7 @@
 
 import json
 
-from src.tutr.models import CommandResponse
+from tutr.models import CommandResponse
 
 
 SYSTEM_PROMPT = f"""\
@@ -18,9 +18,7 @@ Return **ONLY** valid JSON matching this schema:
 """
 
 
-def build_messages(
-    cmd: str | None, query: str, context: str, system_info: str = ""
-) -> list[dict]:
+def build_messages(cmd: str | None, query: str, context: str, system_info: str = "") -> list[dict]:
     """Build the message list for the LLM call."""
     parts: list[str] = []
 

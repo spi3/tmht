@@ -47,7 +47,7 @@ def run_setup() -> TutrConfig:
         api_key = getpass.getpass("  API key: ").strip()
         if not api_key:
             print("  No API key provided. You can set it later via")
-            print(f"  export {env_key}=\"...\"")
+            print(f'  export {env_key}="..."')
 
     # 3. Select model
     models = PROVIDER_MODELS[provider]

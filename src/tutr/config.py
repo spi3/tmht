@@ -4,7 +4,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, TypedDict
 
 from pydantic import BaseModel
 
@@ -15,7 +15,13 @@ CONFIG_FILE = CONFIG_DIR / "config.json"
 
 DEFAULT_MODEL = "gemini/gemini-3-flash-preview"
 
-PROVIDERS = {
+
+class ProviderInfo(TypedDict):
+    env_key: str | None
+    label: str
+
+
+PROVIDERS: dict[str, ProviderInfo] = {
     "gemini": {"env_key": "GEMINI_API_KEY", "label": "Gemini"},
     "anthropic": {"env_key": "ANTHROPIC_API_KEY", "label": "Anthropic"},
     "openai": {"env_key": "OPENAI_API_KEY", "label": "OpenAI"},

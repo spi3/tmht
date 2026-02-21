@@ -105,3 +105,24 @@ To re-run setup, delete the config file:
 ```bash
 rm ~/.tutr/config.json
 ```
+
+## Development
+
+Run all quality checks:
+
+```bash
+uv run poe check
+```
+
+Run tests only:
+
+```bash
+uv run pytest
+```
+
+Lint and format:
+
+```bash
+uv run ruff check .
+uv run ruff format .
+```

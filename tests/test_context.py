@@ -3,8 +3,6 @@
 import subprocess
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from tutr.context import (
     _get_distro,
     gather_context,

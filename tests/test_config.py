@@ -74,7 +74,9 @@ class TestLoadConfig:
 
         assert result.api_key == "sk-test-key"
 
-    def test_provider_api_key_not_injected_when_env_unset(self, config_dir, config_file, monkeypatch):
+    def test_provider_api_key_not_injected_when_env_unset(
+        self, config_dir, config_file, monkeypatch
+    ):
         config_dir.mkdir(parents=True)
         config_file.write_text(json.dumps({"provider": "anthropic"}))
         monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
@@ -244,7 +246,9 @@ class TestNeedsSetup:
 
         assert needs_setup() is True
 
-    def test_file_takes_precedence_over_missing_env_keys(self, config_dir, config_file, monkeypatch):
+    def test_file_takes_precedence_over_missing_env_keys(
+        self, config_dir, config_file, monkeypatch
+    ):
         self._clear_provider_env_keys(monkeypatch)
         config_dir.mkdir(parents=True)
         config_file.write_text(json.dumps({"provider": "openai"}))

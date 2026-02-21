@@ -16,12 +16,14 @@ def main(argv: list[str] | None = None) -> int:
         description="Tell Me How To — AI-powered terminal command assistant",
     )
     parser.add_argument(
-        "-V", "--version",
+        "-V",
+        "--version",
         action="version",
         version=f"%(prog)s {__version__}",
     )
     parser.add_argument(
-        "-d", "--debug",
+        "-d",
+        "--debug",
         action="store_true",
         help="Enable debug logging",
     )

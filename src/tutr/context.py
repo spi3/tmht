@@ -112,10 +112,7 @@ def get_available_commands_summary(max_commands: int = 400) -> str:
         return "Available commands in PATH: unavailable"
     visible = len(commands)
     if total > visible:
-        return (
-            f"Available commands in PATH (showing {visible} of {total}): "
-            + ", ".join(commands)
-        )
+        return f"Available commands in PATH (showing {visible} of {total}): " + ", ".join(commands)
     return f"Available commands in PATH ({total}): " + ", ".join(commands)
 
 

@@ -1,7 +1,5 @@
 """Unit tests for prompt module."""
 
-import pytest
-
 from tutr.prompt import SYSTEM_PROMPT, build_messages
 
 
