@@ -10,6 +10,7 @@ from pydantic import ValidationError
 
 from tutr.config import DEFAULT_MODEL
 from tutr.models import CommandResponse
+from tutr.wait_indicator import build_llm_wait_indicator
 
 # Suppress litellm's noisy logging
 litellm.suppress_debug_info = True
@@ -32,7 +33,13 @@ def query_llm(messages: list[dict], config: dict | None = None) -> CommandRespon
     if api_key:
         kwargs["api_key"] = api_key
 
-    response = litellm.completion(**kwargs)
+    indicator = build_llm_wait_indicator()
+    indicator.start()
+    try:
+        response = litellm.completion(**kwargs)
+    finally:
+        indicator.stop()
+
     content = response.choices[0].message.content.strip()
     log.debug("raw response: %s", content)
 
