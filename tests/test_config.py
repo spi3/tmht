@@ -6,7 +6,7 @@ import stat
 import pytest
 
 import tutr.config as config_module
-from tutr.config import load_config, needs_setup, save_config
+from tutr.config import DEFAULT_MODEL, TutrConfig, load_config, needs_setup, save_config
 
 
 @pytest.fixture(autouse=True)
@@ -38,7 +38,7 @@ class TestLoadConfig:
     def test_no_file_returns_empty_dict(self, config_file):
         assert not config_file.exists()
         result = load_config()
-        assert result == {}
+        assert result == TutrConfig()
 
     def test_loads_values_from_file(self, config_dir, config_file):
         config_dir.mkdir(parents=True)
@@ -46,8 +46,8 @@ class TestLoadConfig:
 
         result = load_config()
 
-        assert result["model"] == "openai/gpt-4o"
-        assert result["provider"] == "openai"
+        assert result.model == "openai/gpt-4o"
+        assert result.provider == "openai"
 
     def test_tutr_model_env_overrides_file(self, config_dir, config_file, monkeypatch):
         config_dir.mkdir(parents=True)
@@ -56,14 +56,14 @@ class TestLoadConfig:
 
         result = load_config()
 
-        assert result["model"] == "anthropic/claude-3-opus"
+        assert result.model == "anthropic/claude-3-opus"
 
     def test_tutr_model_env_sets_model_when_no_file(self, monkeypatch):
         monkeypatch.setenv("TUTR_MODEL", "ollama/llama3")
 
         result = load_config()
 
-        assert result["model"] == "ollama/llama3"
+        assert result.model == "ollama/llama3"
 
     def test_provider_api_key_env_override(self, config_dir, config_file, monkeypatch):
         config_dir.mkdir(parents=True)
@@ -72,7 +72,7 @@ class TestLoadConfig:
 
         result = load_config()
 
-        assert result["api_key"] == "sk-test-key"
+        assert result.api_key == "sk-test-key"
 
     def test_provider_api_key_not_injected_when_env_unset(self, config_dir, config_file, monkeypatch):
         config_dir.mkdir(parents=True)
@@ -81,7 +81,7 @@ class TestLoadConfig:
 
         result = load_config()
 
-        assert "api_key" not in result
+        assert result.api_key is None
 
     def test_unknown_provider_does_not_inject_api_key(self, config_dir, config_file, monkeypatch):
         config_dir.mkdir(parents=True)
@@ -90,7 +90,7 @@ class TestLoadConfig:
 
         result = load_config()
 
-        assert "api_key" not in result
+        assert result.api_key is None
 
     def test_ollama_provider_no_api_key_injected(self, config_dir, config_file):
         """Ollama has env_key=None, so no key injection should occur."""
@@ -99,7 +99,7 @@ class TestLoadConfig:
 
         result = load_config()
 
-        assert "api_key" not in result
+        assert result.api_key is None
 
     def test_gemini_provider_api_key_override(self, config_dir, config_file, monkeypatch):
         config_dir.mkdir(parents=True)
@@ -108,7 +108,7 @@ class TestLoadConfig:
 
         result = load_config()
 
-        assert result["api_key"] == "gemini-test-key"
+        assert result.api_key == "gemini-test-key"
 
     def test_openai_provider_api_key_override(self, config_dir, config_file, monkeypatch):
         config_dir.mkdir(parents=True)
@@ -117,7 +117,7 @@ class TestLoadConfig:
 
         result = load_config()
 
-        assert result["api_key"] == "openai-test-key"
+        assert result.api_key == "openai-test-key"
 
     def test_no_provider_in_config_no_api_key_injected(self, config_dir, config_file, monkeypatch):
         config_dir.mkdir(parents=True)
@@ -126,7 +126,7 @@ class TestLoadConfig:
 
         result = load_config()
 
-        assert "api_key" not in result
+        assert result.api_key is None
 
     def test_file_values_preserved_alongside_overrides(self, config_dir, config_file, monkeypatch):
         config_dir.mkdir(parents=True)
@@ -136,9 +136,11 @@ class TestLoadConfig:
 
         result = load_config()
 
-        assert result["extra_key"] == "preserved"
-        assert result["model"] == "openai/gpt-4o"
-        assert result["api_key"] == "openai-key"
+        assert result.model_dump(exclude_none=True) == {
+            "provider": "openai",
+            "model": "openai/gpt-4o",
+            "api_key": "openai-key",
+        }
 
 
 # ---------------------------------------------------------------------------
@@ -150,20 +152,20 @@ class TestSaveConfig:
     def test_creates_config_dir_if_missing(self, config_dir, config_file):
         assert not config_dir.exists()
 
-        save_config({"model": "test/model"})
+        save_config(TutrConfig(model="test/model"))
 
         assert config_dir.is_dir()
 
     def test_writes_json_to_config_file(self, config_file):
-        payload = {"model": "test/model", "provider": "openai", "api_key": "my-key"}
+        payload = TutrConfig(model="test/model", provider="openai", api_key="my-key")
 
         save_config(payload)
 
         written = json.loads(config_file.read_text())
-        assert written == payload
+        assert written == payload.model_dump(exclude_none=True)
 
     def test_sets_file_permissions_to_0o600(self, config_file):
-        save_config({"model": "test/model"})
+        save_config(TutrConfig(model="test/model"))
 
         file_mode = stat.S_IMODE(config_file.stat().st_mode)
         assert file_mode == 0o600
@@ -172,20 +174,20 @@ class TestSaveConfig:
         config_dir.mkdir(parents=True)
         config_file.write_text(json.dumps({"model": "old/model"}))
 
-        save_config({"model": "new/model"})
+        save_config(TutrConfig(model="new/model"))
 
         written = json.loads(config_file.read_text())
         assert written["model"] == "new/model"
 
     def test_saves_empty_dict(self, config_file):
-        save_config({})
+        save_config(TutrConfig())
 
         written = json.loads(config_file.read_text())
-        assert written == {}
+        assert written == {"model": DEFAULT_MODEL}
 
     def test_json_is_pretty_printed(self, config_file):
         """Verify indent=2 formatting is applied."""
-        save_config({"key": "value"})
+        save_config(TutrConfig(provider="openai"))
 
         raw = config_file.read_text()
         assert "\n" in raw

@@ -4,6 +4,7 @@ from unittest.mock import call, patch
 
 import pytest
 
+from tutr.config import TutrConfig
 from tutr.setup import _prompt_choice, run_setup
 
 
@@ -83,9 +84,9 @@ class TestRunSetupGeminiWithApiKey:
             result = run_setup()
 
         mock_save.assert_called_once_with(
-            {"provider": "gemini", "model": "gemini/gemini-3-flash-preview", "api_key": "my-api-key"}
+            TutrConfig(provider="gemini", model="gemini/gemini-3-flash-preview", api_key="my-api-key")
         )
-        assert result == {"provider": "gemini", "model": "gemini/gemini-3-flash-preview", "api_key": "my-api-key"}
+        assert result == TutrConfig(provider="gemini", model="gemini/gemini-3-flash-preview", api_key="my-api-key")
 
     def test_selects_non_default_model(self):
         inputs = ["1", "2"]  # provider=gemini, model=gemini-2.0-flash
@@ -98,10 +99,8 @@ class TestRunSetupGeminiWithApiKey:
         ):
             result = run_setup()
 
-        mock_save.assert_called_once_with(
-            {"provider": "gemini", "model": "gemini/gemini-2.0-flash", "api_key": "key-abc"}
-        )
-        assert result["model"] == "gemini/gemini-2.0-flash"
+        mock_save.assert_called_once_with(TutrConfig(provider="gemini", model="gemini/gemini-2.0-flash", api_key="key-abc"))
+        assert result.model == "gemini/gemini-2.0-flash"
 
 
 class TestRunSetupOllamaSkipsApiKey:
@@ -132,8 +131,8 @@ class TestRunSetupOllamaSkipsApiKey:
             result = run_setup()
 
         saved = mock_save.call_args[0][0]
-        assert "api_key" not in saved
-        assert "api_key" not in result
+        assert saved.api_key is None
+        assert result.api_key is None
 
     def test_correct_provider_and_model_saved(self):
         inputs = ["4", "2"]  # provider=ollama, model=mistral
@@ -146,7 +145,7 @@ class TestRunSetupOllamaSkipsApiKey:
         ):
             run_setup()
 
-        mock_save.assert_called_once_with({"provider": "ollama", "model": "ollama/mistral"})
+        mock_save.assert_called_once_with(TutrConfig(provider="ollama", model="ollama/mistral"))
 
 
 class TestRunSetupEmptyApiKey:
@@ -164,8 +163,8 @@ class TestRunSetupEmptyApiKey:
             result = run_setup()
 
         saved = mock_save.call_args[0][0]
-        assert "api_key" not in saved
-        assert "api_key" not in result
+        assert saved.api_key is None
+        assert result.api_key is None
 
     def test_whitespace_only_api_key_excluded(self):
         """getpass returns whitespace; after strip() it is empty, so excluded."""
@@ -180,8 +179,8 @@ class TestRunSetupEmptyApiKey:
             result = run_setup()
 
         saved = mock_save.call_args[0][0]
-        assert "api_key" not in saved
-        assert "api_key" not in result
+        assert saved.api_key is None
+        assert result.api_key is None
 
     def test_no_api_key_message_printed(self):
         """When API key is empty, a hint about setting the env var is printed."""

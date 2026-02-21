@@ -85,7 +85,7 @@ class TestCommandResponse:
         """Test that CommandResponse can be serialized."""
         response = CommandResponse(command="ls -la")
         data = response.model_dump()
-        assert data == {"command": "ls -la"}
+        assert data == {"command": "ls -la", "explanation": "", "source": None}
 
     def test_model_json_serialization(self):
         """Test that CommandResponse can be serialized to JSON."""

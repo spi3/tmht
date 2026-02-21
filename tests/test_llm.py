@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from tutr.config import DEFAULT_MODEL
+from tutr.config import DEFAULT_MODEL, TutrConfig
 from tutr.llm import query_llm
 from tutr.models import CommandResponse
 
@@ -92,10 +92,10 @@ class TestQueryLlmConfig:
         assert call_kwargs["model"] == DEFAULT_MODEL
 
     def test_empty_config_uses_default_model(self):
-        """Passing an empty dict uses DEFAULT_MODEL."""
+        """Passing an empty TutrConfig uses DEFAULT_MODEL."""
         payload = json.dumps({"command": "echo hi"})
         with patch("tutr.llm.litellm.completion", return_value=make_mock_response(payload)) as mock_completion:
-            query_llm(MESSAGES, config={})
+            query_llm(MESSAGES, config=TutrConfig())
         call_kwargs = mock_completion.call_args.kwargs
         assert call_kwargs["model"] == DEFAULT_MODEL
 
@@ -104,7 +104,7 @@ class TestQueryLlmConfig:
         payload = json.dumps({"command": "echo hi"})
         custom_model = "anthropic/claude-3-haiku"
         with patch("tutr.llm.litellm.completion", return_value=make_mock_response(payload)) as mock_completion:
-            query_llm(MESSAGES, config={"model": custom_model})
+            query_llm(MESSAGES, config=TutrConfig(model=custom_model))
         call_kwargs = mock_completion.call_args.kwargs
         assert call_kwargs["model"] == custom_model
 
@@ -112,7 +112,7 @@ class TestQueryLlmConfig:
         """An api_key in config is forwarded to litellm.completion."""
         payload = json.dumps({"command": "echo hi"})
         with patch("tutr.llm.litellm.completion", return_value=make_mock_response(payload)) as mock_completion:
-            query_llm(MESSAGES, config={"api_key": "sk-test-123"})
+            query_llm(MESSAGES, config=TutrConfig(api_key="sk-test-123"))
         call_kwargs = mock_completion.call_args.kwargs
         assert call_kwargs["api_key"] == "sk-test-123"
 
@@ -120,7 +120,7 @@ class TestQueryLlmConfig:
         """When api_key is absent from config, it is not forwarded to litellm."""
         payload = json.dumps({"command": "echo hi"})
         with patch("tutr.llm.litellm.completion", return_value=make_mock_response(payload)) as mock_completion:
-            query_llm(MESSAGES, config={})
+            query_llm(MESSAGES, config=TutrConfig())
         call_kwargs = mock_completion.call_args.kwargs
         assert "api_key" not in call_kwargs
 
@@ -128,7 +128,7 @@ class TestQueryLlmConfig:
         """temperature=0 and max_tokens=256 are always sent regardless of config."""
         payload = json.dumps({"command": "echo hi"})
         with patch("tutr.llm.litellm.completion", return_value=make_mock_response(payload)) as mock_completion:
-            query_llm(MESSAGES, config={})
+            query_llm(MESSAGES, config=TutrConfig())
         call_kwargs = mock_completion.call_args.kwargs
         assert call_kwargs["temperature"] == 0
         assert call_kwargs["max_tokens"] == 256
