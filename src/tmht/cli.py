@@ -2,17 +2,12 @@
 
 import argparse
 import logging
-import shutil
 import sys
 
 from tmht import __version__
 from tmht.config import load_config, needs_setup
-from tmht.context import gather_context, get_system_info
-from tmht.llm import query_llm
-from tmht.prompt import build_messages
 from tmht.setup import run_setup
-
-log = logging.getLogger("tmht")
+from tmht.tmht import run
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -49,21 +44,8 @@ def main(argv: list[str] | None = None) -> int:
     else:
         config = load_config()
 
-    first, rest = args.words[0], args.words[1:]
-    if shutil.which(first):
-        cmd = first
-        query = " ".join(rest) if rest else ""
-    else:
-        cmd = None
-        query = " ".join(args.words)
-    log.debug("cmd=%s query=%r", cmd, query)
-
-    context = gather_context(cmd)
-    system_info = get_system_info()
-    messages = build_messages(cmd, query, context, system_info)
-
     try:
-        result = query_llm(messages, config)
+        result = run(args.words, config)
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1
