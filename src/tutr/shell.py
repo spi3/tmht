@@ -58,16 +58,44 @@ def _set_winsize(fd: int, rows: int, cols: int, xp: int = 0, yp: int = 0) -> Non
     fcntl.ioctl(fd, termios.TIOCSWINSZ, struct.pack("HHHH", rows, cols, xp, yp))
 
 
-def _ask_tutor(cmd: str, output: str, config: dict) -> bytes:
-    """Query tutr with a failed command and return the suggestion as bytes."""
+def _ask_tutor(cmd: str, output: str, config: dict) -> tuple[bytes, str | None]:
+    """Query tutr with a failed command and return display text and command."""
     query = f"fix this command: {cmd}"
     if output:
         query += f"\n\nTerminal output:\n{output}"
     try:
         result = run(query.split(), config)
-        return f"\r\n{BOLD}tutr suggests:{RESET}\r\n  {result.command}\r\n\r\n".encode()
+        msg = f"\r\n{BOLD}tutr suggests:{RESET}\r\n  {result.command}\r\n".encode()
+        return msg, result.command
     except Exception as e:
-        return f"\r\n{RED}tutr error: {e}{RESET}\r\n".encode()
+        return f"\r\n{RED}tutr error: {e}{RESET}\r\n".encode(), None
+
+
+def _is_auto_run_accepted(choice: bytes) -> bool:
+    """Return whether a one-byte prompt response means "yes"."""
+    return choice in {b"y", b"Y"}
+
+
+def _prompt_auto_run(stdin_fd: int, stdout_fd: int, master_fd: int, command: str) -> None:
+    """Prompt for yes/no and optionally execute the suggested command."""
+    prompt = "Run suggested command? [y/N] (Esc rejects): "
+    os.write(stdout_fd, prompt.encode())
+    while True:
+        try:
+            choice = os.read(stdin_fd, 1)
+        except OSError:
+            os.write(stdout_fd, b"\r\n")
+            return
+        if not choice:
+            os.write(stdout_fd, b"\r\n")
+            return
+        if _is_auto_run_accepted(choice):
+            os.write(stdout_fd, b"y\r\n")
+            os.write(master_fd, command.encode() + b"\n")
+            return
+        if choice in {b"n", b"N", b"\x03", b"\x1b", b"\r", b"\n"}:
+            os.write(stdout_fd, b"n\r\n")
+            return
 
 
 def _write_rcfile() -> str:
@@ -175,8 +203,15 @@ def shell_loop() -> int:
 
                     if _should_ask_tutor(exit_code, command):
                         ctx = recent_output.decode(errors="replace")[-2048:]
-                        suggestion = _ask_tutor(command, ctx, config)
+                        suggestion, suggested_command = _ask_tutor(command, ctx, config)
                         os.write(stdout_fd, suggestion)
+                        if suggested_command:
+                            _prompt_auto_run(
+                                stdin_fd=stdin_fd,
+                                stdout_fd=stdout_fd,
+                                master_fd=master_fd,
+                                command=suggested_command,
+                            )
 
                     # Reset the buffer after each prompt (successful or not).
                     recent_output = b""
