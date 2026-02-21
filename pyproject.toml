@@ -1,16 +1,37 @@
 [project]
 name = "tutr"
 version = "0.1.0"
-description = "Add your description here"
+description = "AI-powered terminal assistant that generates shell commands from natural language."
 readme = "README.md"
 authors = [
     { name = "spi", email = "spi3@pm.me" }
 ]
+license = { file = "LICENSE" }
 requires-python = ">=3.10"
 dependencies = [
     "litellm>=1.81.13",
     "pydantic>=2.12.5",
 ]
+keywords = ["cli", "terminal", "llm", "developer-tools", "ai"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Utilities",
+]
+
+[project.urls]
+Homepage = "https://github.com/spi3/tutr"
+Repository = "https://github.com/spi3/tutr"
+Issues = "https://github.com/spi3/tutr/issues"
 
 [project.scripts]
 tutr = "tutr.cli:entrypoint"
@@ -29,10 +50,12 @@ markers = [
 
 [dependency-groups]
 dev = [
+    "build>=1.3.0",
     "mypy>=1.18.2",
     "poethepoet>=0.37.0",
     "pytest>=9.0.2",
     "ruff>=0.13.0",
+    "twine>=6.2.0",
 ]
 
 [tool.ruff]
@@ -70,3 +93,17 @@ sequence = [
     { cmd = "mypy" },
     { cmd = "pytest -q" },
 ]
+
+[tool.poe.tasks.dist]
+sequence = [
+    { cmd = "uv build" },
+    { cmd = "twine check dist/tutr-*" },
+]
+
+[tool.poe.tasks.publish_testpypi]
+help = "Upload dist artifacts to TestPyPI using TWINE_USERNAME/TWINE_PASSWORD."
+cmd = "twine upload --repository testpypi dist/tutr-*"
+
+[tool.poe.tasks.publish_pypi]
+help = "Upload dist artifacts to PyPI using TWINE_USERNAME/TWINE_PASSWORD."
+cmd = "twine upload dist/tutr-*"

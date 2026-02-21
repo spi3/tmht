@@ -135,3 +135,32 @@ Lint and format:
 uv run ruff check .
 uv run ruff format .
 ```
+
+## Publishing to PyPI
+
+Build and validate distribution artifacts:
+
+```bash
+uv sync
+uv run poe dist
+```
+
+Upload to TestPyPI first:
+
+```bash
+export TWINE_USERNAME=__token__
+export TWINE_PASSWORD=<testpypi-api-token>
+uv run poe publish_testpypi
+```
+
+Then upload to PyPI:
+
+```bash
+export TWINE_USERNAME=__token__
+export TWINE_PASSWORD=<pypi-api-token>
+uv run poe publish_pypi
+```
+
+You can create API tokens in your account settings:
+- TestPyPI: https://test.pypi.org/manage/account/token/
+- PyPI: https://pypi.org/manage/account/token/

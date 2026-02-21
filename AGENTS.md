@@ -10,6 +10,9 @@ uv run tutr          # Run the CLI
 uv run tutr -V       # Print version
 uv run python -m tutr  # Run as module
 uv run poe check     # Run lint, format check, type-check, and tests
+uv run poe dist      # Build sdist/wheel and run twine checks
+uv run poe publish_testpypi  # Upload dist/* to TestPyPI
+uv run poe publish_pypi      # Upload dist/* to PyPI
 uv run ruff check .  # Lint
 uv run ruff format . # Format
 uv run mypy          # Type-check
@@ -38,3 +41,4 @@ When an agent discovers new information, conventions, or workflow guidance that 
 - Keep `mypy` in strict mode for `src/`; for `tests/`, use `tool.mypy.overrides` to relax `disallow_untyped_defs`/`disallow_untyped_calls` when needed instead of weakening global strictness.
 - The repository pre-commit hook lives at `.githooks/pre-commit` and runs `uv run poe check`; enable it locally with `git config core.hooksPath .githooks`.
 - Live integration tests are opt-in and require env vars: run with `TUTR_RUN_INTEGRATION=1 uv run pytest -q -m integration` and set `TUTR_INTEGRATION_MODEL` (or `TUTR_MODEL`) plus either `TUTR_INTEGRATION_API_KEY` or the provider-specific API key env var.
+- For releases, build and validate artifacts with `uv run poe dist` before any upload, then publish with `uv run poe publish_testpypi` and `uv run poe publish_pypi` using `TWINE_USERNAME=__token__` and an API token in `TWINE_PASSWORD`.
