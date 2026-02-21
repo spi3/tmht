@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from tutr import __version__
 from tutr.cli import entrypoint, main
 from tutr.config import TutrConfig
 
@@ -144,7 +145,7 @@ class TestMainArgparse:
             main(["--version"])
 
         out = capsys.readouterr().out
-        assert "0.1.0" in out
+        assert __version__ in out
 
     def test_no_args_raises_system_exit(self):
         with pytest.raises(SystemExit):
