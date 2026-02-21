@@ -1,10 +1,11 @@
-"""PoC: PTY-based shell wrapper that intercepts errors and asks tutr for help.
+"""PTY-based shell wrapper that intercepts errors and asks tutr for help.
 
 Usage:
     uv run python -m tutr.shell
 
-Spawns a real interactive shell inside a PTY. All I/O passes through
-transparently — interactive programs (vim, top, etc.) work normally.
+Spawns a real interactive shell (bash, zsh, or PowerShell) inside a PTY.
+All I/O passes through transparently; interactive programs (vim, top, etc.)
+work normally.
 
 A PROMPT_COMMAND hook embeds an invisible OSC marker in the output stream
 after each command. The parent process parses these markers to detect
@@ -16,12 +17,14 @@ import fcntl
 import os
 import re
 import select
+import shutil
 import signal
 import struct
 import sys
 import tempfile
 import termios
 import tty
+from dataclasses import dataclass
 
 from tutr.config import load_config, needs_setup
 from tutr.setup import run_setup
@@ -40,10 +43,21 @@ MARKER_RE = re.compile(rb"\033\]7770;(\d+);([^\007]*)\007")
 OUTPUT_BUFFER_SIZE = 4096
 
 
+@dataclass
+class ShellLaunchConfig:
+    """How to launch a supported interactive shell in the PTY child process."""
+
+    kind: str
+    executable: str
+    argv: list[str]
+    env: dict[str, str]
+    cleanup_paths: list[str]
+
+
 def _should_ask_tutor(exit_code: int, command: str) -> bool:
     """Return whether a prompt marker should trigger an LLM suggestion."""
-    # Ctrl-C maps to exit code 130 in bash. Treat that as an intentional
-    # interruption rather than a command failure that needs assistance.
+    # Ctrl-C usually maps to exit code 130 in POSIX shells. Treat that as an
+    # intentional interruption rather than a command failure needing help.
     if exit_code == 130:
         return False
     return exit_code != 0 and bool(command.strip())
@@ -74,6 +88,72 @@ def _ask_tutor(cmd: str, output: str, config: dict) -> tuple[bytes, str | None]:
 def _is_auto_run_accepted(choice: bytes) -> bool:
     """Return whether a one-byte prompt response means "yes"."""
     return choice in {b"y", b"Y"}
+
+
+def _classify_shell(candidate: str) -> str | None:
+    """Return the supported shell kind for a candidate executable/path."""
+    name = os.path.basename(candidate).lower()
+    if name in {"bash", "bash.exe"}:
+        return "bash"
+    if name in {"zsh", "zsh.exe"}:
+        return "zsh"
+    if name in {"pwsh", "pwsh.exe", "powershell", "powershell.exe"}:
+        return "powershell"
+    return None
+
+
+def _resolve_executable(candidate: str) -> str | None:
+    """Resolve an executable name or path to a runnable command path."""
+    has_sep = os.path.sep in candidate or (
+        os.path.altsep is not None and os.path.altsep in candidate
+    )
+    if has_sep:
+        if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
+            return candidate
+        return None
+    return shutil.which(candidate)
+
+
+def _shell_candidates() -> list[str]:
+    """Return shell candidates in preference order."""
+    candidates: list[str] = []
+    override = os.environ.get("TUTR_SHELL", "").strip()
+    if override:
+        candidates.append(override)
+
+    env_shell = os.environ.get("SHELL", "").strip()
+    if env_shell:
+        candidates.append(env_shell)
+
+    if os.name == "nt":
+        candidates.extend(["pwsh", "powershell", "bash", "zsh"])
+    else:
+        candidates.extend(["bash", "zsh", "pwsh", "powershell"])
+
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for item in candidates:
+        key = item.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(item)
+    return deduped
+
+
+def _detect_shell() -> tuple[str, str]:
+    """Detect a supported shell and return (kind, executable path)."""
+    for candidate in _shell_candidates():
+        kind = _classify_shell(candidate)
+        if not kind:
+            continue
+        executable = _resolve_executable(candidate)
+        if executable:
+            return kind, executable
+    raise RuntimeError(
+        "No supported shell found. Install bash, zsh, or PowerShell, "
+        "or set TUTR_SHELL to one of them."
+    )
 
 
 def _prompt_auto_run(stdin_fd: int, stdout_fd: int, master_fd: int, command: str) -> None:
@@ -116,10 +196,95 @@ def _write_rcfile() -> str:
     return rc.name
 
 
+def _write_zsh_rcdir() -> str:
+    """Write a temporary ZDOTDIR containing a zshrc that emits markers."""
+    rcdir = tempfile.mkdtemp(prefix="tutr_zsh_")
+    rcfile = os.path.join(rcdir, ".zshrc")
+    with open(rcfile, "w", encoding="utf-8") as f:
+        f.write(
+            '[ -f ~/.zshrc ] && source ~/.zshrc\n'
+            "autoload -Uz add-zsh-hook 2>/dev/null || true\n"
+            "_tutr_emit_marker() {\n"
+            "  local __e=$?\n"
+            "  local __cmd\n"
+            "  __cmd=$(fc -ln -1 2>/dev/null)\n"
+            "  printf '\\033]7770;%d;%s\\007' \"$__e\" \"$__cmd\"\n"
+            "}\n"
+            "if typeset -f add-zsh-hook >/dev/null 2>&1; then\n"
+            "  add-zsh-hook precmd _tutr_emit_marker\n"
+            "else\n"
+            "  precmd_functions+=(_tutr_emit_marker)\n"
+            "fi\n"
+        )
+    return rcdir
+
+
+def _write_powershell_profile() -> str:
+    """Write a temporary PowerShell profile script that emits markers."""
+    profile = tempfile.NamedTemporaryFile(
+        mode="w", prefix="tutr_", suffix=".ps1", delete=False, encoding="utf-8"
+    )
+    profile.write(
+        "$global:tutr_old_prompt = $function:prompt\n"
+        "function global:prompt {\n"
+        "  $exitCode = if ($?) { 0 } elseif ($LASTEXITCODE -ne $null) "
+        "{ [int]$LASTEXITCODE } else { 1 }\n"
+        "  $last = Get-History -Count 1 -ErrorAction SilentlyContinue\n"
+        "  $cmd = if ($last) { $last.CommandLine } else { '' }\n"
+        "  [Console]::Out.Write((\"`e]7770;{0};{1}`a\" -f $exitCode, $cmd))\n"
+        "  if ($global:tutr_old_prompt) {\n"
+        "    & $global:tutr_old_prompt\n"
+        "  } else {\n"
+        "    \"PS $($executionContext.SessionState.Path.CurrentLocation)> \"\n"
+        "  }\n"
+        "}\n"
+    )
+    profile.close()
+    return profile.name
+
+
+def _build_shell_launch_config() -> ShellLaunchConfig:
+    """Build shell launch configuration for the detected environment."""
+    kind, executable = _detect_shell()
+    env = dict(os.environ)
+
+    if kind == "bash":
+        rcfile = _write_rcfile()
+        return ShellLaunchConfig(
+            kind=kind,
+            executable=executable,
+            argv=[executable, "--rcfile", rcfile, "-i"],
+            env=env,
+            cleanup_paths=[rcfile],
+        )
+    if kind == "zsh":
+        rcdir = _write_zsh_rcdir()
+        env["ZDOTDIR"] = rcdir
+        return ShellLaunchConfig(
+            kind=kind,
+            executable=executable,
+            argv=[executable, "-i"],
+            env=env,
+            cleanup_paths=[rcdir],
+        )
+
+    profile = _write_powershell_profile()
+    return ShellLaunchConfig(
+        kind=kind,
+        executable=executable,
+        argv=[executable, "-NoLogo", "-NoExit", "-File", profile],
+        env=env,
+        cleanup_paths=[profile],
+    )
+
+
 def shell_loop() -> int:
     """Run the PTY-based interactive shell loop."""
     if not sys.stdin.isatty():
         print("Error: stdin must be a terminal", file=sys.stderr)
+        return 1
+    if not hasattr(os, "fork"):
+        print("Error: interactive shell mode requires a POSIX environment", file=sys.stderr)
         return 1
 
     if needs_setup():
@@ -127,7 +292,12 @@ def shell_loop() -> int:
     else:
         config = load_config()
 
-    rcfile = _write_rcfile()
+    try:
+        launch = _build_shell_launch_config()
+    except RuntimeError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+
     master_fd, slave_fd = os.openpty()
 
     # Match the slave PTY size to the real terminal.
@@ -136,7 +306,7 @@ def shell_loop() -> int:
 
     pid = os.fork()
     if pid == 0:
-        # --- Child process: exec bash attached to the slave PTY ---
+        # --- Child process: exec detected shell attached to the slave PTY ---
         os.close(master_fd)
         os.setsid()
         fcntl.ioctl(slave_fd, termios.TIOCSCTTY, 0)
@@ -145,7 +315,7 @@ def shell_loop() -> int:
         os.dup2(slave_fd, 2)
         if slave_fd > 2:
             os.close(slave_fd)
-        os.execvp("bash", ["bash", "--rcfile", rcfile, "-i"])
+        os.execvpe(launch.executable, launch.argv, launch.env)
         os._exit(1)
 
     # --- Parent process: shuttle bytes between real terminal and PTY ---
@@ -225,10 +395,14 @@ def shell_loop() -> int:
                 recent_output = (recent_output + clean)[-OUTPUT_BUFFER_SIZE:]
     finally:
         termios.tcsetattr(sys.stdin.fileno(), termios.TCSAFLUSH, old_attrs)
-        try:
-            os.unlink(rcfile)
-        except OSError:
-            pass
+        for cleanup_path in launch.cleanup_paths:
+            try:
+                if os.path.isdir(cleanup_path):
+                    shutil.rmtree(cleanup_path)
+                else:
+                    os.unlink(cleanup_path)
+            except OSError:
+                pass
 
     _, status = os.waitpid(pid, 0)
     return os.waitstatus_to_exitcode(status)
