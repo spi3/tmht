@@ -78,6 +78,36 @@ Setup is skipped if `~/.tutr/config.json` already exists or provider API key env
 tutr <command> <what you want to do>
 ```
 
+## Auto-start in Every Terminal
+
+`tutr` is an interactive shell wrapper. To launch it automatically for every new
+interactive terminal, add this to your shell rc file.
+
+### Bash (`~/.bashrc`)
+
+```bash
+if [[ $- == *i* ]] && [[ -z "${TUTR_AUTOSTARTED:-}" ]] && [[ -z "${TUTR_SKIP_AUTOSTART:-}" ]]; then
+  export TUTR_AUTOSTARTED=1
+  exec tutr
+fi
+```
+
+### Zsh (`~/.zshrc`)
+
+```zsh
+if [[ -o interactive ]] && [[ -z "${TUTR_AUTOSTARTED:-}" ]] && [[ -z "${TUTR_SKIP_AUTOSTART:-}" ]]; then
+  export TUTR_AUTOSTARTED=1
+  exec tutr
+fi
+```
+
+Notes:
+- `TUTR_AUTOSTARTED` prevents recursion when `tutr` sources your normal rc file.
+- Set `TUTR_SKIP_AUTOSTART=1` before opening a terminal to temporarily bypass autostart.
+- Active wrapped shells show a prompt prefix (default `[tutr]`) and set `TUTR_ACTIVE=1`.
+- Customize the prefix with `TUTR_PROMPT_PREFIX` (example: `export TUTR_PROMPT_PREFIX="[ai]"`).
+- Use `tutr-cli ...` if you want the original one-shot command generator behavior.
+
 ### Examples
 
 ```bash

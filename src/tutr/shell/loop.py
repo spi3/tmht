@@ -16,7 +16,13 @@ from tutr.config import TutrConfig
 
 from tutr.shell.constants import MARKER_RE, OUTPUT_BUFFER_SIZE
 from tutr.shell.detection import _build_shell_launch_config
-from tutr.shell.shell import _ask_tutor, _prompt_auto_run, _should_ask_tutor, load_shell_config
+from tutr.shell.shell import (
+    _ask_tutor,
+    _prompt_auto_run,
+    _shell_status_line,
+    _should_ask_tutor,
+    load_shell_config,
+)
 
 
 def _ask_tutor_with_cancel(
@@ -158,6 +164,7 @@ def shell_loop() -> int:
     recent_output = b""
     stdin_fd = sys.stdin.fileno()
     stdout_fd = sys.stdout.fileno()
+    os.write(stdout_fd, _shell_status_line())
 
     try:
         while True:

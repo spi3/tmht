@@ -31,6 +31,14 @@ def _supports_color() -> bool:
     return os.getenv("TERM", "").lower() != "dumb"
 
 
+def _shell_status_line() -> bytes:
+    """Return a one-line status banner shown when the wrapper shell starts."""
+    message = "tutr active: monitoring failed commands (Ctrl-D exits)\r\n"
+    if _supports_color():
+        return f"{BOLD}{CYAN}{message}{RESET}".encode()
+    return message.encode()
+
+
 def _ask_tutor(cmd: str, output: str, config: TutrConfig) -> tuple[bytes, str | None]:
     """Query tutr with a failed command and return display text and command."""
     query = f"fix this command: {cmd}"

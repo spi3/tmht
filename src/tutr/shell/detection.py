@@ -77,6 +77,7 @@ def _build_shell_launch_config() -> ShellLaunchConfig:
     """Build shell launch configuration for the detected environment."""
     kind, executable = _detect_shell()
     env = dict(os.environ)
+    env["TUTR_ACTIVE"] = "1"
 
     if kind == "bash":
         rcfile = write_bash_rcfile()

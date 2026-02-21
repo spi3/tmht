@@ -4,13 +4,16 @@ import os
 import sys
 import threading
 import time
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from tutr.config import TutrConfig
 from tutr.shell import _is_auto_run_accepted, _should_ask_tutor
 from tutr.shell import _classify_shell, _detect_shell, _shell_candidates
+from tutr.shell.detection import _build_shell_launch_config
+from tutr.shell.hooks import write_bash_rcfile, write_powershell_profile, write_zsh_rcdir
 from tutr.shell.loop import _ask_tutor_with_cancel
-from tutr.shell.shell import _ask_tutor
+from tutr.shell.shell import _ask_tutor, _shell_status_line
 
 
 class TestShouldAskTutor:
@@ -166,6 +169,20 @@ class TestAskTutorMessageFormatting:
         assert "source: man ls" not in text
 
 
+class TestShellStatusLine:
+    @patch.dict("os.environ", {"TERM": "xterm-256color"}, clear=True)
+    def test_uses_color_by_default(self):
+        text = _shell_status_line().decode()
+        assert "\x1b[" in text
+        assert "tutr active: monitoring failed commands" in text
+
+    @patch.dict("os.environ", {"NO_COLOR": "1", "TERM": "xterm-256color"}, clear=True)
+    def test_honors_no_color(self):
+        text = _shell_status_line().decode()
+        assert "\x1b[" not in text
+        assert "tutr active: monitoring failed commands" in text
+
+
 class TestShellEntrypoint:
     def test_entrypoint_checks_for_updates_before_shell_loop(self):
         with patch("tutr.shell.notify_if_update_available") as mock_update:
@@ -179,3 +196,42 @@ class TestShellEntrypoint:
                         assert exc.code == 0
 
         mock_update.assert_called_once()
+
+
+class TestShellHooks:
+    def test_bash_hook_adds_prompt_marker(self):
+        path = write_bash_rcfile()
+        try:
+            content = Path(path).read_text(encoding="utf-8")
+        finally:
+            os.unlink(path)
+        assert '__tutr_prefix="${TUTR_PROMPT_PREFIX:-[tutr]}"' in content
+        assert 'PS1="$__tutr_prefix ' in content
+
+    def test_zsh_hook_adds_prompt_marker(self):
+        rcdir = write_zsh_rcdir()
+        rcfile = Path(rcdir) / ".zshrc"
+        try:
+            content = rcfile.read_text(encoding="utf-8")
+        finally:
+            os.unlink(rcfile)
+            os.rmdir(rcdir)
+        assert 'typeset -g __tutr_prefix="${TUTR_PROMPT_PREFIX:-[tutr]}"' in content
+        assert 'PROMPT="$__tutr_prefix $PROMPT"' in content
+
+    def test_powershell_hook_adds_prompt_marker(self):
+        path = write_powershell_profile()
+        try:
+            content = Path(path).read_text(encoding="utf-8")
+        finally:
+            os.unlink(path)
+        assert "$tutrPrefix = if ($env:TUTR_PROMPT_PREFIX)" in content
+        assert 'if ($tutrPrefix) { "$tutrPrefix $(& $global:tutr_old_prompt)" }' in content
+
+
+class TestShellLaunchEnv:
+    @patch("tutr.shell.detection._detect_shell", return_value=("bash", "/bin/bash"))
+    @patch("tutr.shell.detection.write_bash_rcfile", return_value="/tmp/tutr_test.bashrc")
+    def test_launch_env_sets_tutr_active(self, _write, _detect):
+        launch = _build_shell_launch_config()
+        assert launch.env.get("TUTR_ACTIVE") == "1"

@@ -10,6 +10,10 @@ def write_bash_rcfile() -> str:
     rc.write(
         # Source the user's normal bashrc so the shell feels familiar.
         "[ -f ~/.bashrc ] && source ~/.bashrc\n"
+        # Add a visible prompt marker so users can tell they are inside tutr.
+        '__tutr_prefix="${TUTR_PROMPT_PREFIX:-[tutr]}"\n'
+        'if [[ -n "$__tutr_prefix" ]] && [[ "${PS1:-}" != "$__tutr_prefix "* ]]; then '
+        'PS1="$__tutr_prefix ${PS1:-$ }"; fi\n'
         # PROMPT_COMMAND runs after every command. It emits an OSC marker
         # containing the exit code and the command that was just run.
         "PROMPT_COMMAND='__e=$?; "
@@ -27,6 +31,9 @@ def write_zsh_rcdir() -> str:
     with open(rcfile, "w", encoding="utf-8") as f:
         f.write(
             "[ -f ~/.zshrc ] && source ~/.zshrc\n"
+            'typeset -g __tutr_prefix="${TUTR_PROMPT_PREFIX:-[tutr]}"\n'
+            'if [[ -n "$__tutr_prefix" ]] && [[ "$PROMPT" != "$__tutr_prefix "* ]]; '
+            'then PROMPT="$__tutr_prefix $PROMPT"; fi\n'
             "autoload -Uz add-zsh-hook 2>/dev/null || true\n"
             "_tutr_emit_marker() {\n"
             "  local __e=$?\n"
@@ -49,6 +56,7 @@ def write_powershell_profile() -> str:
         mode="w", prefix="tutr_", suffix=".ps1", delete=False, encoding="utf-8"
     )
     profile.write(
+        '$tutrPrefix = if ($env:TUTR_PROMPT_PREFIX) { $env:TUTR_PROMPT_PREFIX } else { "[tutr]" }\n'
         "$global:tutr_old_prompt = $function:prompt\n"
         "function global:prompt {\n"
         "  $exitCode = if ($?) { 0 } elseif ($LASTEXITCODE -ne $null) "
@@ -57,9 +65,10 @@ def write_powershell_profile() -> str:
         "  $cmd = if ($last) { $last.CommandLine } else { '' }\n"
         '  [Console]::Out.Write(("`e]7770;{0};{1}`a" -f $exitCode, $cmd))\n'
         "  if ($global:tutr_old_prompt) {\n"
-        "    & $global:tutr_old_prompt\n"
+        '    if ($tutrPrefix) { "$tutrPrefix $(& $global:tutr_old_prompt)" } else { & $global:tutr_old_prompt }\n'
         "  } else {\n"
-        '    "PS $($executionContext.SessionState.Path.CurrentLocation)> "\n'
+        '    if ($tutrPrefix) { "$tutrPrefix PS $($executionContext.SessionState.Path.CurrentLocation)> " } '
+        'else { "PS $($executionContext.SessionState.Path.CurrentLocation)> " }\n'
         "  }\n"
         "}\n"
     )
