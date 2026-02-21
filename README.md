@@ -23,6 +23,18 @@ Generates terminal commands from natural language queries.
 Requires Python 3.10+.
 
 ```bash
+pipx install tutr
+```
+
+Or run it without installing:
+
+```bash
+uvx tutr
+```
+
+For development from source:
+
+```bash
 git clone https://github.com/spi/tutr.git
 cd tutr
 uv sync
