@@ -4,9 +4,9 @@ import json
 import logging
 
 import litellm
+from pydantic import ValidationError
 
 log = logging.getLogger(__name__)
-from pydantic import ValidationError
 
 from tutr.config import DEFAULT_OLLAMA_HOST, TutrConfig
 from tutr.models import CommandResponse
