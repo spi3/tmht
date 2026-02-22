@@ -8,12 +8,20 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from tutr.config import TutrConfig
-from tutr.shell.shell import _is_auto_run_accepted, _should_ask_tutor
-from tutr.shell.detection import _classify_shell, _detect_shell, _shell_candidates
-from tutr.shell.detection import _build_shell_launch_config
+from tutr.shell.detection import (
+    _build_shell_launch_config,
+    _classify_shell,
+    _detect_shell,
+    _shell_candidates,
+)
 from tutr.shell.hooks import write_bash_rcfile, write_powershell_profile, write_zsh_rcdir
 from tutr.shell.loop import _ask_tutor_with_cancel
-from tutr.shell.shell import _ask_tutor, _shell_status_line
+from tutr.shell.shell import (
+    _ask_tutor,
+    _is_auto_run_accepted,
+    _shell_status_line,
+    _should_ask_tutor,
+)
 
 
 class TestShouldAskTutor:

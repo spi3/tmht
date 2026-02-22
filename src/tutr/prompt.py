@@ -5,7 +5,6 @@ from typing import TypedDict
 
 from tutr.models import CommandResponse
 
-
 SYSTEM_PROMPT = f"""\
 You are a terminal command assistant. Your job is to generate the exact terminal \
 command that accomplishes what the user describes.

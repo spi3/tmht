@@ -2,7 +2,6 @@
 
 from pydantic import BaseModel
 
-
 DEFAULT_MODEL = "gemini/gemini-3-flash-preview"
 DEFAULT_OLLAMA_HOST = "http://localhost:11434"
 

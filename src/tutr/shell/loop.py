@@ -13,7 +13,6 @@ import tty
 from types import FrameType
 
 from tutr.config import TutrConfig
-
 from tutr.shell.constants import MARKER_RE, OUTPUT_BUFFER_SIZE
 from tutr.shell.detection import _build_shell_launch_config
 from tutr.shell.shell import (

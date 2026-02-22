@@ -3,9 +3,9 @@
 import os
 import shlex
 
+from tutr.cli.wizard import run_setup
 from tutr.config import TutrConfig, load_config, needs_setup
 from tutr.constants import BOLD, CYAN, RED, RESET
-from tutr.cli.wizard import run_setup
 from tutr.tutr import run_query
 
 

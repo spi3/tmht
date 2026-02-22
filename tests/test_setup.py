@@ -2,9 +2,8 @@
 
 from unittest.mock import patch
 
-from tutr.config import TutrConfig
 from tutr.cli.wizard import _prompt_choice, run_configure, run_setup
-
+from tutr.config import TutrConfig
 
 # ---------------------------------------------------------------------------
 # _prompt_choice

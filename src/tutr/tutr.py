@@ -3,8 +3,8 @@
 import logging
 import shutil
 
-from tutr.context import gather_context, get_system_info
 from tutr.config import TutrConfig
+from tutr.context import gather_context, get_system_info
 from tutr.llm import query_llm
 from tutr.models import CommandResponse
 from tutr.prompt import build_messages

@@ -7,8 +7,8 @@ from tutr.update_check import (
     _fetch_latest_version,
     _infer_installer,
     _update_command,
-    notify_if_update_available_async,
     notify_if_update_available,
+    notify_if_update_available_async,
 )
 
 
