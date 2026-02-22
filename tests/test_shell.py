@@ -415,7 +415,8 @@ class TestShellHooks:
         finally:
             os.unlink(path)
         assert "$tutrPrefix = if ($env:TUTR_PROMPT_PREFIX)" in content
-        assert 'if ($tutrPrefix) { "$tutrPrefix $(& $global:tutr_old_prompt)" }' in content
+        assert "if ($tutrPrefix) {" in content
+        assert '"$tutrPrefix $(& $global:tutr_old_prompt)"' in content
 
 
 class TestShellLaunchEnv:

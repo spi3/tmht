@@ -65,10 +65,17 @@ def write_powershell_profile() -> str:
         "  $cmd = if ($last) { $last.CommandLine } else { '' }\n"
         '  [Console]::Out.Write(("`e]7770;{0};{1}`a" -f $exitCode, $cmd))\n'
         "  if ($global:tutr_old_prompt) {\n"
-        '    if ($tutrPrefix) { "$tutrPrefix $(& $global:tutr_old_prompt)" } else { & $global:tutr_old_prompt }\n'
+        "    if ($tutrPrefix) {\n"
+        '      "$tutrPrefix $(& $global:tutr_old_prompt)"\n'
+        "    } else {\n"
+        "      & $global:tutr_old_prompt\n"
+        "    }\n"
         "  } else {\n"
-        '    if ($tutrPrefix) { "$tutrPrefix PS $($executionContext.SessionState.Path.CurrentLocation)> " } '
-        'else { "PS $($executionContext.SessionState.Path.CurrentLocation)> " }\n'
+        "    if ($tutrPrefix) {\n"
+        '      "$tutrPrefix PS $($executionContext.SessionState.Path.CurrentLocation)> "\n'
+        "    } else {\n"
+        '      "PS $($executionContext.SessionState.Path.CurrentLocation)> "\n'
+        "    }\n"
         "  }\n"
         "}\n"
     )

@@ -17,7 +17,8 @@ class CommandResponse(BaseModel):
         description=(
             "Brief explanation of what the command does. "
             "Keep the explanation to one sentence. "
-            "If the request is ambiguous, make reasonable assumptions and note them in the explanation."
+            "If the request is ambiguous, make reasonable assumptions "
+            "and note them in the explanation."
         ),
     )
     source: str | None = Field(

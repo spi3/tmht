@@ -35,7 +35,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--model", help="Model ID in LiteLLM format (example: openai/gpt-4o)")
     parser.add_argument(
         "--api-key",
-        help="Provider API key to store in config (not recommended; may leak via shell history/process list)",
+        help=(
+            "Provider API key to store in config "
+            "(not recommended; may leak via shell history/process list)"
+        ),
     )
     parser.add_argument(
         "--clear-api-key",
