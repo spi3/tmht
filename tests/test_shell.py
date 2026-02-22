@@ -7,6 +7,8 @@ import time
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from tutr.config import TutrConfig
 from tutr.shell.detection import (
     _build_shell_launch_config,
@@ -19,6 +21,7 @@ from tutr.shell.loop import _ask_tutor_with_cancel
 from tutr.shell.shell import (
     _ask_tutor,
     _is_auto_run_accepted,
+    _prompt_auto_run,
     _shell_status_line,
     _should_ask_tutor,
 )
@@ -47,6 +50,91 @@ class TestAutoRunPrompt:
         assert _is_auto_run_accepted(b"n") is False
         assert _is_auto_run_accepted(b"\x1b") is False
         assert _is_auto_run_accepted(b"\x03") is False
+
+
+class TestPromptAutoRun:
+    def test_accepts_lowercase_y_and_writes_to_pty(self):
+        writes: list[tuple[int, bytes]] = []
+
+        def _fake_write(fd: int, data: bytes) -> int:
+            writes.append((fd, data))
+            return len(data)
+
+        with patch("tutr.shell.shell.os.read", return_value=b"y"):
+            with patch("tutr.shell.shell.os.write", side_effect=_fake_write):
+                _prompt_auto_run(10, 11, 12, "echo hi")
+
+        assert writes == [
+            (11, b"Run suggested command? [y/N] (Esc rejects): "),
+            (11, b"y\r\n"),
+            (12, b"echo hi\n"),
+        ]
+
+    def test_accepts_uppercase_y_and_writes_to_pty(self):
+        writes: list[tuple[int, bytes]] = []
+
+        def _fake_write(fd: int, data: bytes) -> int:
+            writes.append((fd, data))
+            return len(data)
+
+        with patch("tutr.shell.shell.os.read", return_value=b"Y"):
+            with patch("tutr.shell.shell.os.write", side_effect=_fake_write):
+                _prompt_auto_run(10, 11, 12, "echo hi")
+
+        assert writes == [
+            (11, b"Run suggested command? [y/N] (Esc rejects): "),
+            (11, b"y\r\n"),
+            (12, b"echo hi\n"),
+        ]
+
+    @pytest.mark.parametrize("choice", [b"n", b"N", b"\x1b", b"\x03", b"\r", b"\n"])
+    def test_reject_choices_write_no_and_do_not_run_command(self, choice: bytes):
+        writes: list[tuple[int, bytes]] = []
+
+        def _fake_write(fd: int, data: bytes) -> int:
+            writes.append((fd, data))
+            return len(data)
+
+        with patch("tutr.shell.shell.os.read", return_value=choice):
+            with patch("tutr.shell.shell.os.write", side_effect=_fake_write):
+                _prompt_auto_run(10, 11, 12, "echo hi")
+
+        assert writes == [
+            (11, b"Run suggested command? [y/N] (Esc rejects): "),
+            (11, b"n\r\n"),
+        ]
+
+    def test_empty_read_writes_newline_and_returns(self):
+        writes: list[tuple[int, bytes]] = []
+
+        def _fake_write(fd: int, data: bytes) -> int:
+            writes.append((fd, data))
+            return len(data)
+
+        with patch("tutr.shell.shell.os.read", return_value=b""):
+            with patch("tutr.shell.shell.os.write", side_effect=_fake_write):
+                _prompt_auto_run(10, 11, 12, "echo hi")
+
+        assert writes == [
+            (11, b"Run suggested command? [y/N] (Esc rejects): "),
+            (11, b"\r\n"),
+        ]
+
+    def test_oserror_from_read_writes_newline_and_returns(self):
+        writes: list[tuple[int, bytes]] = []
+
+        def _fake_write(fd: int, data: bytes) -> int:
+            writes.append((fd, data))
+            return len(data)
+
+        with patch("tutr.shell.shell.os.read", side_effect=OSError("read failed")):
+            with patch("tutr.shell.shell.os.write", side_effect=_fake_write):
+                _prompt_auto_run(10, 11, 12, "echo hi")
+
+        assert writes == [
+            (11, b"Run suggested command? [y/N] (Esc rejects): "),
+            (11, b"\r\n"),
+        ]
 
 
 class TestShellDetection:
