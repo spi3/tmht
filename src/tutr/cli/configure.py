@@ -7,7 +7,7 @@ import sys
 from tutr import __version__
 from tutr.cli.wizard import run_configure
 from tutr.config import CONFIG_FILE, PROVIDERS, TutrConfig, load_config, needs_setup
-from tutr.update_check import notify_if_update_available
+from tutr.update_check import notify_if_update_available_async
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -62,7 +62,7 @@ def run(argv: list[str]) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
 
-    notify_if_update_available(__version__)
+    notify_if_update_available_async(__version__)
     logging.basicConfig(
         level=logging.DEBUG if args.debug else logging.WARNING,
         format="%(name)s %(levelname)s: %(message)s",

@@ -1,12 +1,13 @@
 """Unit tests for tutr.update_check."""
 
 import io
-from unittest.mock import MagicMock, patch
+from unittest.mock import ANY, MagicMock, patch
 
 from tutr.update_check import (
     _fetch_latest_version,
     _infer_installer,
     _update_command,
+    notify_if_update_available_async,
     notify_if_update_available,
 )
 
@@ -141,3 +142,38 @@ class TestNotifyIfUpdateAvailable:
             notify_if_update_available("0.1.2", stream=stream)
 
         assert stream.getvalue() == ""
+
+    def test_skips_interactive_prompt_when_disabled(self):
+        stream = _TtyStringIO()
+        stdin = _TtyStringIO("y\n")
+        with patch("tutr.update_check.sys.stdin", stdin):
+            with patch("tutr.update_check._fetch_latest_version", return_value="0.2.0"):
+                with patch(
+                    "tutr.update_check._update_command",
+                    return_value=["uv", "tool", "upgrade", "tutr"],
+                ):
+                    with patch("tutr.update_check.subprocess.run") as mock_run:
+                        notify_if_update_available(
+                            "0.1.2",
+                            stream=stream,
+                            allow_interactive_update=False,
+                        )
+
+        mock_run.assert_not_called()
+        assert "Run update now?" not in stream.getvalue()
+
+
+class TestNotifyIfUpdateAvailableAsync:
+    def test_starts_background_non_interactive_thread(self):
+        mock_thread = MagicMock()
+        with patch("tutr.update_check.threading.Thread", return_value=mock_thread) as thread_cls:
+            notify_if_update_available_async("0.1.2")
+
+        thread_cls.assert_called_once_with(
+            target=notify_if_update_available,
+            args=("0.1.2", ANY),
+            kwargs={"allow_interactive_update": False},
+            daemon=True,
+            name="tutr-update-check",
+        )
+        mock_thread.start.assert_called_once_with()

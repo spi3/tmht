@@ -9,7 +9,7 @@ from tutr.cli.shared import format_suggested_command
 from tutr.cli.wizard import run_setup
 from tutr.config import load_config, needs_setup
 from tutr.tutr import run as query_llm
-from tutr.update_check import notify_if_update_available
+from tutr.update_check import notify_if_update_available_async
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -45,7 +45,7 @@ def run(argv: list[str]) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
 
-    notify_if_update_available(__version__)
+    notify_if_update_available_async(__version__)
     logging.basicConfig(
         level=logging.DEBUG if args.debug else logging.WARNING,
         format="%(name)s %(levelname)s: %(message)s",

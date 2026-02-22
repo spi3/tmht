@@ -24,7 +24,7 @@ def _query_patches(**overrides):
         load_config=MagicMock(return_value=TutrConfig()),
         run_setup=MagicMock(return_value=TutrConfig()),
         query_llm=MagicMock(return_value=_make_llm_result()),
-        notify_if_update_available=MagicMock(),
+        notify_if_update_available_async=MagicMock(),
     )
     defaults.update(overrides)
     return patch.multiple("tutr.cli.query", **defaults)
@@ -38,7 +38,7 @@ def _configure_patches(**overrides):
         needs_setup=MagicMock(return_value=False),
         load_config=MagicMock(return_value=TutrConfig()),
         run_configure=MagicMock(return_value=TutrConfig()),
-        notify_if_update_available=MagicMock(),
+        notify_if_update_available_async=MagicMock(),
     )
     defaults.update(overrides)
     return patch.multiple("tutr.cli.configure", **defaults)

@@ -7,6 +7,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+import threading
 from typing import TextIO
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -67,7 +68,12 @@ def _is_interactive(stream: TextIO, input_stream: TextIO) -> bool:
     return stream.isatty() and input_stream.isatty()
 
 
-def notify_if_update_available(current_version: str, stream: TextIO = sys.stderr) -> None:
+def notify_if_update_available(
+    current_version: str,
+    stream: TextIO = sys.stderr,
+    *,
+    allow_interactive_update: bool = True,
+) -> None:
     """Offer an update when the installed version is behind PyPI."""
     latest_version = _fetch_latest_version()
     if latest_version is None or latest_version == current_version:
@@ -83,7 +89,7 @@ def notify_if_update_available(current_version: str, stream: TextIO = sys.stderr
         file=stream,
     )
 
-    if not _is_interactive(stream, sys.stdin):
+    if not allow_interactive_update or not _is_interactive(stream, sys.stdin):
         return
 
     print("Run update now? [y/N]: ", end="", file=stream, flush=True)
@@ -105,3 +111,15 @@ def notify_if_update_available(current_version: str, stream: TextIO = sys.stderr
         f"Update command failed with exit code {result.returncode}. Run manually: {command_text}",
         file=stream,
     )
+
+
+def notify_if_update_available_async(current_version: str, stream: TextIO = sys.stderr) -> None:
+    """Run update notification in a background thread without prompting for input."""
+    thread = threading.Thread(
+        target=notify_if_update_available,
+        args=(current_version, stream),
+        kwargs={"allow_interactive_update": False},
+        daemon=True,
+        name="tutr-update-check",
+    )
+    thread.start()
