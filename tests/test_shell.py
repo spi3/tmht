@@ -190,12 +190,14 @@ class TestShellStatusLine:
         text = _shell_status_line().decode()
         assert "\x1b[" in text
         assert "tutr active" in text
+        assert "Ctrl-D to exit" in text
 
     @patch.dict("os.environ", {"NO_COLOR": "1", "TERM": "xterm-256color"}, clear=True)
     def test_honors_no_color(self):
         text = _shell_status_line().decode()
         assert "\x1b[" not in text
         assert "tutr active" in text
+        assert "Ctrl-D to exit" in text
 
 
 class TestShellEntrypoint:
