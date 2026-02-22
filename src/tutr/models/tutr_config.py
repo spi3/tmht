@@ -15,3 +15,4 @@ class TutrConfig(BaseModel):
     ollama_host: str | None = None
     show_explanation: bool | None = None
     update_check_enabled: bool = True
+    no_execute: bool | None = None

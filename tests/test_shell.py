@@ -245,6 +245,19 @@ class TestShellEntrypoint:
 
         mock_update.assert_called_once()
 
+    def test_entrypoint_passes_no_execute_override_to_shell_loop(self):
+        with patch("tutr.shell.notify_if_update_available_async"):
+            with patch("tutr.shell.shell_loop", return_value=0) as mock_shell_loop:
+                with patch.object(sys, "argv", ["tutr", "--no-execute"]):
+                    try:
+                        from tutr.shell import entrypoint
+
+                        entrypoint()
+                    except SystemExit as exc:
+                        assert exc.code == 0
+
+        mock_shell_loop.assert_called_once_with(no_execute_override=True)
+
 
 class TestShellHooks:
     def test_bash_hook_adds_prompt_marker(self):

@@ -105,7 +105,7 @@ def _set_winsize(fd: int, rows: int, cols: int, xp: int = 0, yp: int = 0) -> Non
     fcntl.ioctl(fd, termios.TIOCSWINSZ, struct.pack("HHHH", rows, cols, xp, yp))
 
 
-def shell_loop() -> int:
+def shell_loop(*, no_execute_override: bool | None = None) -> int:
     """Run the PTY-based interactive shell loop."""
     if not sys.stdin.isatty():
         print("Error: stdin must be a terminal", file=sys.stderr)
@@ -115,6 +115,9 @@ def shell_loop() -> int:
         return 1
 
     config = load_shell_config()
+    no_execute = bool(config.no_execute)
+    if no_execute_override is not None:
+        no_execute = no_execute_override
 
     try:
         launch = _build_shell_launch_config()
@@ -203,12 +206,15 @@ def shell_loop() -> int:
                         )
                         os.write(stdout_fd, suggestion)
                         if suggested_command:
-                            _prompt_auto_run(
-                                stdin_fd=stdin_fd,
-                                stdout_fd=stdout_fd,
-                                master_fd=master_fd,
-                                command=suggested_command,
-                            )
+                            if no_execute:
+                                os.write(stdout_fd, b"Auto-run disabled (--no-execute).\r\n")
+                            else:
+                                _prompt_auto_run(
+                                    stdin_fd=stdin_fd,
+                                    stdout_fd=stdout_fd,
+                                    master_fd=master_fd,
+                                    command=suggested_command,
+                                )
 
                     # Reset the buffer after each prompt (successful or not).
                     recent_output = b""

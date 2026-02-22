@@ -73,6 +73,17 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Disable periodic update checks",
     )
+    execute_group = parser.add_mutually_exclusive_group()
+    execute_group.add_argument(
+        "--no-execute",
+        action="store_true",
+        help="In shell mode, never prompt to auto-run tutr suggestions",
+    )
+    execute_group.add_argument(
+        "--allow-execute",
+        action="store_true",
+        help="In shell mode, allow prompting to auto-run tutr suggestions (default)",
+    )
     return parser
 
 
@@ -108,6 +119,11 @@ def run(argv: list[str]) -> int:
         update_check_enabled = True
     if args.disable_update_check:
         update_check_enabled = False
+    no_execute: bool | None = None
+    if args.no_execute:
+        no_execute = True
+    if args.allow_execute:
+        no_execute = False
 
     has_explicit_options = any(
         [
@@ -119,6 +135,7 @@ def run(argv: list[str]) -> int:
             args.clear_ollama_host,
             show_explanation is not None,
             update_check_enabled is not None,
+            no_execute is not None,
         ]
     )
     interactive = args.interactive or not has_explicit_options
@@ -140,6 +157,7 @@ def run(argv: list[str]) -> int:
             clear_ollama_host=args.clear_ollama_host,
             show_explanation=show_explanation,
             update_check_enabled=update_check_enabled,
+            no_execute=no_execute,
             interactive=interactive,
         )
     except ValueError as e:
@@ -153,5 +171,6 @@ def run(argv: list[str]) -> int:
     print(f"  ollama_host: {updated.ollama_host or 'not set'}")
     print("  show_explanation: " + ("true" if bool(updated.show_explanation) else "false"))
     print("  update_check_enabled: " + ("true" if updated.update_check_enabled else "false"))
+    print("  no_execute: " + ("true" if bool(updated.no_execute) else "false"))
     print("")
     return 0

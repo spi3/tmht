@@ -251,6 +251,19 @@ class TestConfigureCommand:
         kwargs = mock_run_configure.call_args.kwargs
         assert kwargs["update_check_enabled"] is False
 
+    def test_passes_no_execute_flag_to_run_configure(self):
+        mock_run_configure = MagicMock(
+            return_value=TutrConfig(provider="openai", model="openai/gpt-4o", no_execute=True)
+        )
+        with _configure_patches(
+            run_configure=mock_run_configure,
+            load_config=MagicMock(return_value=TutrConfig()),
+        ):
+            assert main(["configure", "--no-execute"]) == 0
+
+        kwargs = mock_run_configure.call_args.kwargs
+        assert kwargs["no_execute"] is True
+
     def test_returns_one_when_run_configure_raises_value_error(self):
         with _configure_patches(
             run_configure=MagicMock(side_effect=ValueError("invalid")),

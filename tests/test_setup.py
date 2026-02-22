@@ -320,3 +320,11 @@ class TestRunConfigureNonInteractive:
             updated = run_configure(config, ollama_host="localhost:11434/")
 
         assert updated.ollama_host == "http://localhost:11434"
+
+    def test_no_execute_toggle_is_applied(self):
+        config = TutrConfig(provider="openai", model="openai/gpt-4o", no_execute=None)
+
+        with patch("tutr.cli.wizard.save_config"):
+            updated = run_configure(config, no_execute=True)
+
+        assert updated.no_execute is True
