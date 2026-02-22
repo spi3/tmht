@@ -314,12 +314,12 @@ class TestGetAvailableCommands:
     @patch("tutr.context.os.scandir")
     def test_collects_and_sorts_unique_command_names(self, mock_scandir, mock_access):
         bin_entries = [MagicMock(name="zsh"), MagicMock(name="git"), MagicMock(name=".hidden")]
-        for entry, name in zip(bin_entries, ["zsh", "git", ".hidden"]):
+        for entry, name in zip(bin_entries, ["zsh", "git", ".hidden"], strict=True):
             entry.name = name
             entry.path = f"/bin/{name}"
 
         usr_entries = [MagicMock(name="git"), MagicMock(name="python3")]
-        for entry, name in zip(usr_entries, ["git", "python3"]):
+        for entry, name in zip(usr_entries, ["git", "python3"], strict=True):
             entry.name = name
             entry.path = f"/usr/bin/{name}"
 
