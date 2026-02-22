@@ -8,6 +8,7 @@ import pytest
 from tutr import __version__
 from tutr.cli import entrypoint, main
 from tutr.config import TutrConfig
+from tutr.tutr import MAX_QUERY_LENGTH
 
 
 def _make_llm_result(command="git checkout -b testing", explanation="", source=None):
@@ -124,6 +125,23 @@ class TestMainLlmError:
         assert "ls -la" in out
         assert "Lists all files, including hidden ones." in out
         assert "source: man ls" in out
+
+    def test_returns_one_when_query_exceeds_max_length(self, capsys):
+        long_query = "x" * (MAX_QUERY_LENGTH + 1)
+        with (
+            patch("tutr.cli.query.needs_setup", return_value=False),
+            patch("tutr.cli.query.load_config", return_value=TutrConfig()),
+            patch("tutr.cli.query.notify_if_update_available_async"),
+            patch("tutr.tutr.gather_context"),
+            patch("tutr.tutr.get_system_info"),
+            patch("tutr.tutr.build_messages"),
+            patch("tutr.tutr.query_llm"),
+            patch("shutil.which", return_value=None),
+        ):
+            assert main([long_query]) == 1
+
+        err = capsys.readouterr().err
+        assert "Query is too long" in err
 
 
 class TestMainArgparse:

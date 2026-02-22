@@ -2,7 +2,7 @@
 
 from unittest.mock import MagicMock, patch
 
-from tutr.tutr import parse_input, run
+from tutr.tutr import MAX_QUERY_LENGTH, parse_input, run
 
 
 def _make_llm_result(command="git checkout -b testing"):
@@ -96,3 +96,19 @@ class TestRun:
                 run(["git", "status"], config)
         config_arg = mock_llm.call_args[0][1]
         assert config_arg == config
+
+    def test_raises_when_query_exceeds_max_length(self):
+        long_query = "x" * (MAX_QUERY_LENGTH + 1)
+        mock_gather = MagicMock(return_value="ctx")
+        mock_llm = MagicMock(return_value=_make_llm_result())
+        with _core_patches(gather_context=mock_gather, query_llm=mock_llm):
+            with patch("shutil.which", return_value=None):
+                try:
+                    run([long_query], {})
+                except ValueError as err:
+                    assert "Query is too long" in str(err)
+                else:
+                    raise AssertionError("Expected ValueError for overlong query")
+
+        mock_gather.assert_not_called()
+        mock_llm.assert_not_called()
