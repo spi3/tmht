@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 
 from tutr.context import (
     _get_distro,
+    _iter_path_dirs,
     gather_context,
     get_available_commands,
     get_available_commands_summary,
@@ -147,6 +148,23 @@ class TestGetManPage:
         result = get_man_page("git", max_lines=10)
         assert result is not None
         assert "10 of 50 lines shown" in result
+
+    @patch("tutr.context.subprocess.run")
+    def test_max_lines_zero_keeps_only_truncation_notice(self, mock_run):
+        long_output = "\n".join(f"line {i}" for i in range(5))
+        mock_run.return_value = make_result(stdout=long_output, returncode=0)
+        result = get_man_page("git", max_lines=0)
+        assert result is not None
+        lines = result.splitlines()
+        assert len(lines) == 2
+        assert lines[0] == ""
+        assert lines[1] == "... (truncated, 0 of 5 lines shown)"
+
+
+class TestIterPathDirs:
+    def test_skips_duplicate_entries_after_normalization(self):
+        path_env = "/usr/bin:/usr/bin/:/bin:/bin"
+        assert list(_iter_path_dirs(path_env)) == ["/usr/bin", "/bin"]
 
 
 class TestGatherContext:

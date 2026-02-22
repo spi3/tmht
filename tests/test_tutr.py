@@ -46,6 +46,12 @@ class TestParseInput:
         assert cmd == "ls"
         assert query == ""
 
+    def test_unknown_single_word_treated_as_query_only(self):
+        with patch("shutil.which", return_value=None):
+            cmd, query = parse_input(["nonexistent"])
+        assert cmd is None
+        assert query == "nonexistent"
+
     def test_multi_word_query_joined_with_spaces(self):
         with patch("shutil.which", return_value="/usr/bin/git"):
             cmd, query = parse_input(["git", "create", "and", "switch", "to", "new", "branch"])

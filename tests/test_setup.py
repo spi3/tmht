@@ -2,7 +2,7 @@
 
 from unittest.mock import patch
 
-from tutr.cli.wizard import _prompt_choice, run_configure, run_setup
+from tutr.cli.wizard import _normalize_ollama_host, _prompt_choice, run_configure, run_setup
 from tutr.config import TutrConfig
 
 # ---------------------------------------------------------------------------
@@ -328,3 +328,16 @@ class TestRunConfigureNonInteractive:
             updated = run_configure(config, no_execute=True)
 
         assert updated.no_execute is True
+
+
+class TestNormalizeOllamaHost:
+    def test_empty_string_uses_default_host(self):
+        assert _normalize_ollama_host("") == "http://localhost:11434"
+
+    def test_existing_scheme_is_preserved(self):
+        assert (
+            _normalize_ollama_host("https://ollama.internal:8443") == "https://ollama.internal:8443"
+        )
+
+    def test_trailing_slash_is_removed(self):
+        assert _normalize_ollama_host("localhost:11434/") == "http://localhost:11434"
