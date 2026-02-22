@@ -220,6 +220,19 @@ class TestConfigureCommand:
         assert kwargs["ollama_host"] == "localhost:11434"
         assert kwargs["clear_ollama_host"] is False
 
+    def test_passes_disable_update_check_flag_to_run_configure(self):
+        mock_run_configure = MagicMock(
+            return_value=TutrConfig(provider="openai", model="openai/gpt-4o")
+        )
+        with _configure_patches(
+            run_configure=mock_run_configure,
+            load_config=MagicMock(return_value=TutrConfig()),
+        ):
+            assert main(["configure", "--disable-update-check"]) == 0
+
+        kwargs = mock_run_configure.call_args.kwargs
+        assert kwargs["update_check_enabled"] is False
+
     def test_returns_one_when_run_configure_raises_value_error(self):
         with _configure_patches(
             run_configure=MagicMock(side_effect=ValueError("invalid")),

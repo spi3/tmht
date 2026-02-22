@@ -14,3 +14,4 @@ class TutrConfig(BaseModel):
     api_key: str | None = None
     ollama_host: str | None = None
     show_explanation: bool | None = None
+    update_check_enabled: bool = True

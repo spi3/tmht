@@ -47,6 +47,7 @@ def run_configure(
     ollama_host: str | None = None,
     clear_ollama_host: bool = False,
     show_explanation: bool | None = None,
+    update_check_enabled: bool | None = None,
     interactive: bool = False,
 ) -> TutrConfig:
     """Configure tutr interactively or through explicit options."""
@@ -84,6 +85,8 @@ def run_configure(
 
     if show_explanation is not None:
         updated.show_explanation = show_explanation
+    if update_check_enabled is not None:
+        updated.update_check_enabled = update_check_enabled
 
     if updated.provider == "ollama" and not updated.ollama_host:
         updated.ollama_host = DEFAULT_OLLAMA_HOST
@@ -165,6 +168,7 @@ def _run_interactive_configure(config: TutrConfig) -> TutrConfig:
         api_key=api_key,
         ollama_host=ollama_host,
         show_explanation=show_explanation,
+        update_check_enabled=config.update_check_enabled,
     )
 
 

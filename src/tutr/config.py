@@ -30,6 +30,8 @@ CONFIG_DIR = Path.home() / ".tutr"
 CONFIG_FILE = CONFIG_DIR / "config.json"
 DEFAULT_MODEL = MODEL_DEFAULT_MODEL
 DEFAULT_OLLAMA_HOST = MODEL_DEFAULT_OLLAMA_HOST
+BOOLEAN_TRUE_STRINGS = {"1", "true", "yes", "on"}
+BOOLEAN_FALSE_STRINGS = {"0", "false", "no", "off"}
 
 PROVIDERS: dict[str, ProviderInfo] = {
     "gemini": {"env_key": "GEMINI_API_KEY", "label": "Gemini"},
@@ -66,6 +68,12 @@ def load_config() -> TutrConfig:
     # Env var overrides
     if model := os.environ.get("TUTR_MODEL"):
         config.model = model
+    if update_check_raw := os.environ.get("TUTR_UPDATE_CHECK"):
+        normalized = update_check_raw.strip().lower()
+        if normalized in BOOLEAN_TRUE_STRINGS:
+            config.update_check_enabled = True
+        elif normalized in BOOLEAN_FALSE_STRINGS:
+            config.update_check_enabled = False
 
     provider = config.provider
     if provider and provider in PROVIDERS:

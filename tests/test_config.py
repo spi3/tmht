@@ -179,7 +179,13 @@ class TestLoadConfig:
             "provider": "openai",
             "model": "openai/gpt-4o",
             "api_key": "openai-key",
+            "update_check_enabled": True,
         }
+
+    def test_tutr_update_check_env_disables_update_checks(self, monkeypatch):
+        monkeypatch.setenv("TUTR_UPDATE_CHECK", "false")
+        result = load_config()
+        assert result.update_check_enabled is False
 
 
 # ---------------------------------------------------------------------------
@@ -249,7 +255,7 @@ class TestSaveConfig:
         save_config(TutrConfig())
 
         written = json.loads(config_file.read_text())
-        assert written == {"model": DEFAULT_MODEL}
+        assert written == {"model": DEFAULT_MODEL, "update_check_enabled": True}
 
     def test_json_is_pretty_printed(self, config_file):
         """Verify indent=2 formatting is applied."""

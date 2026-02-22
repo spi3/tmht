@@ -62,6 +62,17 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Disable explanation output by default",
     )
+    update_group = parser.add_mutually_exclusive_group()
+    update_group.add_argument(
+        "--enable-update-check",
+        action="store_true",
+        help="Enable periodic update checks (default)",
+    )
+    update_group.add_argument(
+        "--disable-update-check",
+        action="store_true",
+        help="Disable periodic update checks",
+    )
     return parser
 
 
@@ -70,7 +81,6 @@ def run(argv: list[str]) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
 
-    notify_if_update_available_async(__version__)
     logging.basicConfig(
         level=logging.DEBUG if args.debug else logging.WARNING,
         format="%(name)s %(levelname)s: %(message)s",
@@ -93,6 +103,11 @@ def run(argv: list[str]) -> int:
         show_explanation = True
     if args.hide_explanation:
         show_explanation = False
+    update_check_enabled: bool | None = None
+    if args.enable_update_check:
+        update_check_enabled = True
+    if args.disable_update_check:
+        update_check_enabled = False
 
     has_explicit_options = any(
         [
@@ -103,6 +118,7 @@ def run(argv: list[str]) -> int:
             args.ollama_host is not None,
             args.clear_ollama_host,
             show_explanation is not None,
+            update_check_enabled is not None,
         ]
     )
     interactive = args.interactive or not has_explicit_options
@@ -111,6 +127,7 @@ def run(argv: list[str]) -> int:
         existing = load_config()
     else:
         existing = TutrConfig()
+    notify_if_update_available_async(__version__, config=existing)
 
     try:
         updated = run_configure(
@@ -122,6 +139,7 @@ def run(argv: list[str]) -> int:
             ollama_host=args.ollama_host,
             clear_ollama_host=args.clear_ollama_host,
             show_explanation=show_explanation,
+            update_check_enabled=update_check_enabled,
             interactive=interactive,
         )
     except ValueError as e:
@@ -134,5 +152,6 @@ def run(argv: list[str]) -> int:
     print(f"  api_key: {'set' if updated.api_key else 'not set'}")
     print(f"  ollama_host: {updated.ollama_host or 'not set'}")
     print("  show_explanation: " + ("true" if bool(updated.show_explanation) else "false"))
+    print("  update_check_enabled: " + ("true" if updated.update_check_enabled else "false"))
     print("")
     return 0

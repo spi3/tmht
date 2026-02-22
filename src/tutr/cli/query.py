@@ -45,7 +45,6 @@ def run(argv: list[str]) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
 
-    notify_if_update_available_async(__version__)
     logging.basicConfig(
         level=logging.DEBUG if args.debug else logging.WARNING,
         format="%(name)s %(levelname)s: %(message)s",
@@ -57,6 +56,7 @@ def run(argv: list[str]) -> int:
         config = load_config()
     if args.explain:
         config.show_explanation = True
+    notify_if_update_available_async(__version__, config=config)
 
     try:
         result = query_llm(args.words, config)

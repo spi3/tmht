@@ -49,8 +49,13 @@
             <tr><td><code>ANTHROPIC_API_KEY</code></td><td>Anthropic API key</td><td>none</td></tr>
             <tr><td><code>OPENAI_API_KEY</code></td><td>OpenAI API key</td><td>none</td></tr>
             <tr><td><code>OLLAMA_HOST</code></td><td>Ollama host URL override</td><td><code>http://localhost:11434</code></td></tr>
+            <tr><td><code>TUTR_UPDATE_CHECK</code></td><td>Enable (<code>1/true</code>) or disable (<code>0/false</code>) update checks</td><td><code>true</code></td></tr>
           </tbody>
         </table>
+
+        <p>You can also toggle update checks in saved config with:</p>
+        <pre><code>tutr-cli configure --disable-update-check
+tutr-cli configure --enable-update-check</code></pre>
 
         <h2>Helpful runtime vars</h2>
         <table>

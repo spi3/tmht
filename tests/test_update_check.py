@@ -1,15 +1,29 @@
 """Unit tests for tutr.update_check."""
 
 import io
+from pathlib import Path
 from unittest.mock import ANY, MagicMock, patch
 
+import pytest
+
+from tutr.config import TutrConfig
 from tutr.update_check import (
     _fetch_latest_version,
     _infer_installer,
+    _is_update_check_due,
+    _record_update_check_epoch,
     _update_command,
     notify_if_update_available,
     notify_if_update_available_async,
 )
+
+
+@pytest.fixture(autouse=True)
+def isolated_update_cache(tmp_path, monkeypatch):
+    cache_file = tmp_path / "update-check.json"
+    monkeypatch.setattr("tutr.update_check.CONFIG_DIR", tmp_path)
+    monkeypatch.setattr("tutr.update_check.UPDATE_CHECK_CACHE_FILE", cache_file)
+    return cache_file
 
 
 class _TtyStringIO(io.StringIO):
@@ -89,11 +103,14 @@ class TestUpdateCommand:
 class TestNotifyIfUpdateAvailable:
     def test_prints_message_when_outdated_and_non_interactive(self):
         stream = io.StringIO()
-        with patch("tutr.update_check._fetch_latest_version", return_value="0.2.0"):
-            with patch(
-                "tutr.update_check._update_command", return_value=["uv", "tool", "upgrade", "tutr"]
-            ):
-                notify_if_update_available("0.1.2", stream=stream)
+        with patch("tutr.update_check._is_update_check_due", return_value=True):
+            with patch("tutr.update_check._record_update_check_epoch"):
+                with patch("tutr.update_check._fetch_latest_version", return_value="0.2.0"):
+                    with patch(
+                        "tutr.update_check._update_command",
+                        return_value=["uv", "tool", "upgrade", "tutr"],
+                    ):
+                        notify_if_update_available("0.1.2", stream=stream)
 
         output = stream.getvalue()
         assert "0.1.2 -> 0.2.0" in output
@@ -103,13 +120,16 @@ class TestNotifyIfUpdateAvailable:
         stream = _TtyStringIO()
         stdin = _TtyStringIO("y\n")
         with patch("tutr.update_check.sys.stdin", stdin):
-            with patch("tutr.update_check._fetch_latest_version", return_value="0.2.0"):
-                with patch(
-                    "tutr.update_check._update_command", return_value=["pipx", "upgrade", "tutr"]
-                ):
-                    with patch("tutr.update_check.subprocess.run") as mock_run:
-                        mock_run.return_value.returncode = 0
-                        notify_if_update_available("0.1.2", stream=stream)
+            with patch("tutr.update_check._is_update_check_due", return_value=True):
+                with patch("tutr.update_check._record_update_check_epoch"):
+                    with patch("tutr.update_check._fetch_latest_version", return_value="0.2.0"):
+                        with patch(
+                            "tutr.update_check._update_command",
+                            return_value=["pipx", "upgrade", "tutr"],
+                        ):
+                            with patch("tutr.update_check.subprocess.run") as mock_run:
+                                mock_run.return_value.returncode = 0
+                                notify_if_update_available("0.1.2", stream=stream)
 
         mock_run.assert_called_once_with(["pipx", "upgrade", "tutr"], check=False)
         assert "Run update now?" in stream.getvalue()
@@ -119,27 +139,33 @@ class TestNotifyIfUpdateAvailable:
         stream = _TtyStringIO()
         stdin = _TtyStringIO("n\n")
         with patch("tutr.update_check.sys.stdin", stdin):
-            with patch("tutr.update_check._fetch_latest_version", return_value="0.2.0"):
-                with patch(
-                    "tutr.update_check._update_command",
-                    return_value=["uv", "tool", "upgrade", "tutr"],
-                ):
-                    with patch("tutr.update_check.subprocess.run") as mock_run:
-                        notify_if_update_available("0.1.2", stream=stream)
+            with patch("tutr.update_check._is_update_check_due", return_value=True):
+                with patch("tutr.update_check._record_update_check_epoch"):
+                    with patch("tutr.update_check._fetch_latest_version", return_value="0.2.0"):
+                        with patch(
+                            "tutr.update_check._update_command",
+                            return_value=["uv", "tool", "upgrade", "tutr"],
+                        ):
+                            with patch("tutr.update_check.subprocess.run") as mock_run:
+                                notify_if_update_available("0.1.2", stream=stream)
 
         mock_run.assert_not_called()
 
     def test_prints_nothing_when_versions_match(self):
         stream = io.StringIO()
-        with patch("tutr.update_check._fetch_latest_version", return_value="0.1.2"):
-            notify_if_update_available("0.1.2", stream=stream)
+        with patch("tutr.update_check._is_update_check_due", return_value=True):
+            with patch("tutr.update_check._record_update_check_epoch"):
+                with patch("tutr.update_check._fetch_latest_version", return_value="0.1.2"):
+                    notify_if_update_available("0.1.2", stream=stream)
 
         assert stream.getvalue() == ""
 
     def test_prints_nothing_when_latest_version_unknown(self):
         stream = io.StringIO()
-        with patch("tutr.update_check._fetch_latest_version", return_value=None):
-            notify_if_update_available("0.1.2", stream=stream)
+        with patch("tutr.update_check._is_update_check_due", return_value=True):
+            with patch("tutr.update_check._record_update_check_epoch"):
+                with patch("tutr.update_check._fetch_latest_version", return_value=None):
+                    notify_if_update_available("0.1.2", stream=stream)
 
         assert stream.getvalue() == ""
 
@@ -147,20 +173,55 @@ class TestNotifyIfUpdateAvailable:
         stream = _TtyStringIO()
         stdin = _TtyStringIO("y\n")
         with patch("tutr.update_check.sys.stdin", stdin):
-            with patch("tutr.update_check._fetch_latest_version", return_value="0.2.0"):
-                with patch(
-                    "tutr.update_check._update_command",
-                    return_value=["uv", "tool", "upgrade", "tutr"],
-                ):
-                    with patch("tutr.update_check.subprocess.run") as mock_run:
-                        notify_if_update_available(
-                            "0.1.2",
-                            stream=stream,
-                            allow_interactive_update=False,
-                        )
+            with patch("tutr.update_check._is_update_check_due", return_value=True):
+                with patch("tutr.update_check._record_update_check_epoch"):
+                    with patch("tutr.update_check._fetch_latest_version", return_value="0.2.0"):
+                        with patch(
+                            "tutr.update_check._update_command",
+                            return_value=["uv", "tool", "upgrade", "tutr"],
+                        ):
+                            with patch("tutr.update_check.subprocess.run") as mock_run:
+                                notify_if_update_available(
+                                    "0.1.2",
+                                    stream=stream,
+                                    allow_interactive_update=False,
+                                )
 
         mock_run.assert_not_called()
         assert "Run update now?" not in stream.getvalue()
+
+    def test_skips_when_cache_not_due(self):
+        stream = io.StringIO()
+        with patch("tutr.update_check._is_update_check_due", return_value=False):
+            with patch("tutr.update_check._fetch_latest_version") as fetch:
+                notify_if_update_available("0.1.2", stream=stream)
+
+        fetch.assert_not_called()
+        assert stream.getvalue() == ""
+
+    def test_skips_when_update_checks_disabled(self):
+        stream = io.StringIO()
+        config = TutrConfig(update_check_enabled=False)
+        with patch("tutr.update_check._fetch_latest_version") as fetch:
+            notify_if_update_available("0.1.2", stream=stream, config=config)
+
+        fetch.assert_not_called()
+        assert stream.getvalue() == ""
+
+
+class TestUpdateCheckCache:
+    def test_records_update_check_epoch(self, isolated_update_cache):
+        _record_update_check_epoch(123.0)
+        assert isolated_update_cache.exists()
+        assert '"last_checked_epoch": 123.0' in Path(isolated_update_cache).read_text()
+
+    def test_is_due_after_ttl(self):
+        with patch("tutr.update_check._read_last_update_check_epoch", return_value=1_000.0):
+            assert _is_update_check_due(1_000.0 + 86_400.0) is True
+
+    def test_is_not_due_before_ttl(self):
+        with patch("tutr.update_check._read_last_update_check_epoch", return_value=1_000.0):
+            assert _is_update_check_due(1_000.0 + 60.0) is False
 
 
 class TestNotifyIfUpdateAvailableAsync:
@@ -172,7 +233,7 @@ class TestNotifyIfUpdateAvailableAsync:
         thread_cls.assert_called_once_with(
             target=notify_if_update_available,
             args=("0.1.2", ANY),
-            kwargs={"allow_interactive_update": False},
+            kwargs={"allow_interactive_update": False, "config": None},
             daemon=True,
             name="tutr-update-check",
         )

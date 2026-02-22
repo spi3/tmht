@@ -158,6 +158,7 @@ Non-interactive examples:
 tutr-cli configure --provider openai --model openai/gpt-4o --show-explanation
 tutr-cli configure --provider anthropic --model anthropic/claude-sonnet-4-6
 tutr-cli configure --provider ollama --ollama-host http://localhost:11434
+tutr-cli configure --disable-update-check
 tutr-cli configure --clear-api-key
 ```
 
@@ -185,6 +186,7 @@ Config is stored in `~/.tutr/config.json`. Environment variables override the co
 | `ANTHROPIC_API_KEY` | Anthropic API key | — |
 | `OPENAI_API_KEY` | OpenAI API key | — |
 | `OLLAMA_HOST` | Ollama host URL override | `http://localhost:11434` |
+| `TUTR_UPDATE_CHECK` | Enable (`1/true`) or disable (`0/false`) update checks | `true` |
 
 You can edit settings with `tutr-cli configure` or directly in `~/.tutr/config.json`.
 
