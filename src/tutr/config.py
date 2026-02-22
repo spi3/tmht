@@ -47,6 +47,7 @@ def load_config() -> TutrConfig:
     raw_config: dict[str, Any] = {}
 
     _ensure_config_dir_permissions(create=False)
+    _ensure_config_file_permissions()
 
     if CONFIG_FILE.exists():
         try:
@@ -116,11 +117,26 @@ def _ensure_config_dir_permissions(*, create: bool) -> None:
         return
 
     current_mode = stat.S_IMODE(CONFIG_DIR.stat().st_mode)
-    if current_mode != 0o700:
+    if current_mode & 0o077:
         CONFIG_DIR.chmod(0o700)
         log.warning(
             "updated config directory permissions for %s from %o to 700",
             CONFIG_DIR,
+            current_mode,
+        )
+
+
+def _ensure_config_file_permissions() -> None:
+    """Ensure the config file is not readable/writable by group or others."""
+    if not CONFIG_FILE.exists():
+        return
+
+    current_mode = stat.S_IMODE(CONFIG_FILE.stat().st_mode)
+    if current_mode & 0o077:
+        CONFIG_FILE.chmod(0o600)
+        log.warning(
+            "updated config file permissions for %s from %o to 600",
+            CONFIG_FILE,
             current_mode,
         )
 

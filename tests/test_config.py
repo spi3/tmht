@@ -187,6 +187,26 @@ class TestLoadConfig:
         result = load_config()
         assert result.update_check_enabled is False
 
+    def test_load_corrects_permissive_config_dir_permissions(self, config_dir, config_file):
+        config_dir.mkdir(parents=True, mode=0o755)
+        config_dir.chmod(0o755)
+        config_file.write_text(json.dumps({"provider": "openai"}))
+
+        load_config()
+
+        dir_mode = stat.S_IMODE(config_dir.stat().st_mode)
+        assert dir_mode == 0o700
+
+    def test_load_corrects_permissive_config_file_permissions(self, config_dir, config_file):
+        config_dir.mkdir(parents=True)
+        config_file.write_text(json.dumps({"provider": "openai"}))
+        config_file.chmod(0o644)
+
+        load_config()
+
+        file_mode = stat.S_IMODE(config_file.stat().st_mode)
+        assert file_mode == 0o600
+
 
 # ---------------------------------------------------------------------------
 # save_config
