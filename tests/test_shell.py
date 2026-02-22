@@ -210,7 +210,7 @@ class TestShellStatusLine:
 
 class TestShellEntrypoint:
     def test_entrypoint_checks_for_updates_before_shell_loop(self):
-        with patch("tutr.shell.notify_if_update_available") as mock_update:
+        with patch("tutr.shell.notify_if_update_available_async") as mock_update:
             with patch("tutr.shell.shell_loop", return_value=0):
                 with patch.object(sys, "argv", ["tutr"]):
                     try:

@@ -2,7 +2,7 @@
 
 from tutr import __version__
 from tutr.shell.loop import shell_loop
-from tutr.update_check import notify_if_update_available
+from tutr.update_check import notify_if_update_available_async
 
 __all__ = [
     "entrypoint",
@@ -11,5 +11,5 @@ __all__ = [
 
 
 def entrypoint() -> None:
-    notify_if_update_available(__version__)
+    notify_if_update_available_async(__version__)
     raise SystemExit(shell_loop())
