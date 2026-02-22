@@ -98,34 +98,6 @@ class TestMainLlmError:
 
         assert "bad response" in capsys.readouterr().err
 
-    def test_prints_explanation_when_enabled_in_config(self, capsys):
-        config = TutrConfig(show_explanation=True)
-        result = _make_llm_result("ls -la", "Lists all files, including hidden ones.", "man ls")
-        with _query_patches(
-            load_config=MagicMock(return_value=config),
-            query_llm=MagicMock(return_value=result),
-        ):
-            main(["ls", "list files"])
-
-        out = capsys.readouterr().out
-        assert "ls -la" in out
-        assert "Lists all files, including hidden ones." in out
-        assert "source: man ls" in out
-
-    def test_prints_explanation_when_explain_flag_set(self, capsys):
-        config = TutrConfig(show_explanation=False)
-        result = _make_llm_result("ls -la", "Lists all files, including hidden ones.", "man ls")
-        with _query_patches(
-            load_config=MagicMock(return_value=config),
-            query_llm=MagicMock(return_value=result),
-        ):
-            main(["--explain", "ls", "list files"])
-
-        out = capsys.readouterr().out
-        assert "ls -la" in out
-        assert "Lists all files, including hidden ones." in out
-        assert "source: man ls" in out
-
     def test_returns_one_when_query_exceeds_max_length(self, capsys):
         long_query = "x" * (MAX_QUERY_LENGTH + 1)
         with (
@@ -160,6 +132,36 @@ class TestMainLlmError:
         out_err = capsys.readouterr()
         assert "matched dangerous-pattern checks" in out_err.err
         assert "rm -rf ~/tmp" in out_err.out
+
+
+class TestMainExplanationOutput:
+    def test_prints_explanation_when_enabled_in_config(self, capsys):
+        config = TutrConfig(show_explanation=True)
+        result = _make_llm_result("ls -la", "Lists all files, including hidden ones.", "man ls")
+        with _query_patches(
+            load_config=MagicMock(return_value=config),
+            query_llm=MagicMock(return_value=result),
+        ):
+            main(["ls", "list files"])
+
+        out = capsys.readouterr().out
+        assert "ls -la" in out
+        assert "Lists all files, including hidden ones." in out
+        assert "source: man ls" in out
+
+    def test_prints_explanation_when_explain_flag_set(self, capsys):
+        config = TutrConfig(show_explanation=False)
+        result = _make_llm_result("ls -la", "Lists all files, including hidden ones.", "man ls")
+        with _query_patches(
+            load_config=MagicMock(return_value=config),
+            query_llm=MagicMock(return_value=result),
+        ):
+            main(["--explain", "ls", "list files"])
+
+        out = capsys.readouterr().out
+        assert "ls -la" in out
+        assert "Lists all files, including hidden ones." in out
+        assert "source: man ls" in out
 
 
 class TestMainArgparse:
