@@ -8,15 +8,12 @@ import pytest
 from tutr import __version__
 from tutr.cli import entrypoint, main
 from tutr.config import TutrConfig
+from tutr.models import CommandResponse
 from tutr.tutr import MAX_QUERY_LENGTH
 
 
 def _make_llm_result(command="git checkout -b testing", explanation="", source=None):
-    result = MagicMock()
-    result.command = command
-    result.explanation = explanation
-    result.source = source
-    return result
+    return CommandResponse(command=command, explanation=explanation, source=source)
 
 
 def _query_patches(**overrides):

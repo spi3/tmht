@@ -2,13 +2,12 @@
 
 from unittest.mock import MagicMock, patch
 
+from tutr.models import CommandResponse
 from tutr.tutr import MAX_QUERY_LENGTH, parse_input, run
 
 
 def _make_llm_result(command="git checkout -b testing"):
-    result = MagicMock()
-    result.command = command
-    return result
+    return CommandResponse(command=command)
 
 
 def _core_patches(**overrides):
