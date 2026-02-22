@@ -235,6 +235,16 @@ class TestSaveConfig:
         written = json.loads(config_file.read_text())
         assert written["model"] == "new/model"
 
+    def test_overwrite_replaces_permissive_file_with_0o600(self, config_dir, config_file):
+        config_dir.mkdir(parents=True)
+        config_file.write_text(json.dumps({"model": "old/model"}))
+        config_file.chmod(0o644)
+
+        save_config(TutrConfig(model="new/model"))
+
+        file_mode = stat.S_IMODE(config_file.stat().st_mode)
+        assert file_mode == 0o600
+
     def test_saves_empty_dict(self, config_file):
         save_config(TutrConfig())
 

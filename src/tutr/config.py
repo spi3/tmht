@@ -3,6 +3,7 @@
 import json
 import logging
 import os
+import secrets
 import stat
 from pathlib import Path
 from typing import Any
@@ -83,10 +84,18 @@ def load_config() -> TutrConfig:
 def save_config(config: TutrConfig) -> None:
     """Save config to file."""
     _ensure_config_dir_permissions(create=True)
-    with open(CONFIG_FILE, "w") as f:
-        json.dump(config.model_dump(exclude_none=True), f, indent=2)
-    # Restrict permissions — file contains API key
-    CONFIG_FILE.chmod(0o600)
+    # Write to a temp file opened as 0o600, then atomically replace.
+    temp_file = CONFIG_DIR / f".{CONFIG_FILE.name}.{os.getpid()}.{secrets.token_hex(8)}.tmp"
+    fd = os.open(temp_file, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    try:
+        with os.fdopen(fd, "w") as f:
+            json.dump(config.model_dump(exclude_none=True), f, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(temp_file, CONFIG_FILE)
+    except Exception:
+        temp_file.unlink(missing_ok=True)
+        raise
     log.debug("saved config to %s", CONFIG_FILE)
 
 
