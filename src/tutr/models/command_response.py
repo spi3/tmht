@@ -10,7 +10,6 @@ class CommandResponse(BaseModel):
             "The command must be a single, copy-pasteable terminal command. "
             "Use pipes, &&, or ; to chain commands if needed. "
             "Do not wrap the command in backticks or code blocks. "
-            ""
         )
     )
     explanation: str = Field(
