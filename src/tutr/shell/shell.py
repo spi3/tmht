@@ -33,7 +33,7 @@ def _supports_color() -> bool:
 
 def _shell_status_line() -> bytes:
     """Return a one-line status banner shown when the wrapper shell starts."""
-    message = "tutr active: monitoring failed commands (Ctrl-D exits)\r\n"
+    message = "tutr active (Ctrl-D to exits)\r\n"
     if _supports_color():
         return f"{BOLD}{CYAN}{message}{RESET}".encode()
     return message.encode()
