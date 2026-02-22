@@ -83,14 +83,25 @@ class TestLoadConfig:
 
         assert result.model == "ollama/llama3"
 
-    def test_provider_api_key_env_override(self, config_dir, config_file, monkeypatch):
+    @pytest.mark.parametrize(
+        ("provider", "env_var", "env_value"),
+        [
+            ("anthropic", "ANTHROPIC_API_KEY", "sk-test-key"),
+            ("gemini", "GEMINI_API_KEY", "gemini-test-key"),
+            ("openai", "OPENAI_API_KEY", "openai-test-key"),
+            ("xai", "XAI_API_KEY", "xai-test-key"),
+        ],
+    )
+    def test_provider_api_key_env_override(
+        self, config_dir, config_file, monkeypatch, provider, env_var, env_value
+    ):
         config_dir.mkdir(parents=True)
-        config_file.write_text(json.dumps({"provider": "anthropic"}))
-        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test-key")
+        config_file.write_text(json.dumps({"provider": provider}))
+        monkeypatch.setenv(env_var, env_value)
 
         result = load_config()
 
-        assert result.api_key == "sk-test-key"
+        assert result.api_key == env_value
 
     def test_provider_api_key_not_injected_when_env_unset(
         self, config_dir, config_file, monkeypatch
@@ -130,33 +141,6 @@ class TestLoadConfig:
         result = load_config()
 
         assert result.ollama_host == "http://ollama.internal:11434"
-
-    def test_gemini_provider_api_key_override(self, config_dir, config_file, monkeypatch):
-        config_dir.mkdir(parents=True)
-        config_file.write_text(json.dumps({"provider": "gemini"}))
-        monkeypatch.setenv("GEMINI_API_KEY", "gemini-test-key")
-
-        result = load_config()
-
-        assert result.api_key == "gemini-test-key"
-
-    def test_openai_provider_api_key_override(self, config_dir, config_file, monkeypatch):
-        config_dir.mkdir(parents=True)
-        config_file.write_text(json.dumps({"provider": "openai"}))
-        monkeypatch.setenv("OPENAI_API_KEY", "openai-test-key")
-
-        result = load_config()
-
-        assert result.api_key == "openai-test-key"
-
-    def test_xai_provider_api_key_override(self, config_dir, config_file, monkeypatch):
-        config_dir.mkdir(parents=True)
-        config_file.write_text(json.dumps({"provider": "xai"}))
-        monkeypatch.setenv("XAI_API_KEY", "xai-test-key")
-
-        result = load_config()
-
-        assert result.api_key == "xai-test-key"
 
     def test_no_provider_in_config_no_api_key_injected(self, config_dir, config_file, monkeypatch):
         config_dir.mkdir(parents=True)
