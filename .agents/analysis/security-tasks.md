@@ -46,7 +46,7 @@ Derived from `docs/analysis/security.md` (2026-02-20).
   - Scope: `src/tutr/update_check.py`, config/docs.
   - Action: Check at most once per 24h; provide a flag/config to disable update checks.
 
-- [ ] Strengthen prompt-injection defenses.
+- [x] Strengthen prompt-injection defenses.
   - Scope: prompt construction in `src/tutr/`.
   - Action: Keep documentation context clearly separated from instructions; explicitly instruct model to ignore instructions embedded in context; rely on safety filter as enforcement layer.
 
