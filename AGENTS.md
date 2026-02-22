@@ -44,6 +44,7 @@ When an agent discovers new information, conventions, or workflow guidance that 
 
 - Prefer structured models (for example, Pydantic models) over untyped `dict` values for config and other cross-module data contracts whenever it makes sense.
 - Use `uv run poe check` as the default pre-merge validation command; it runs ruff lint, ruff format check, mypy, pip-audit, and pytest.
+- Keep unit-test coverage gating enabled via pytest-cov (`--cov=tutr --cov-report=term-missing --cov-fail-under=85`) so `uv run poe check` fails on coverage regressions.
 - Keep `mypy` in strict mode for `src/`; for `tests/`, use `tool.mypy.overrides` to relax `disallow_untyped_defs`/`disallow_untyped_calls` when needed instead of weakening global strictness.
 - The repository pre-commit hook lives at `.githooks/pre-commit` and runs `uv run poe check`; enable it locally with `git config core.hooksPath .githooks`.
 - Live integration tests are opt-in: run with `TUTR_RUN_INTEGRATION=1 uv run pytest -q -m integration`; if no integration override env vars are set, tests use saved `tutr` config, otherwise `TUTR_INTEGRATION_MODEL`/`TUTR_MODEL` and `TUTR_INTEGRATION_API_KEY` (or provider env key) override.
