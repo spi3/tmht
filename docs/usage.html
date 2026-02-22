@@ -72,6 +72,10 @@ tutr-cli configure --provider anthropic --model anthropic/claude-sonnet-4-6
 tutr-cli configure --provider ollama --ollama-host http://localhost:11434
 tutr-cli configure --clear-api-key</code></pre>
         <p>Security note: avoid passing secrets with <code>--api-key</code> because command-line arguments can leak through shell history and process listings. Prefer interactive <code>tutr-cli configure</code> prompts or provider API key environment variables.</p>
+
+        <h2>Data sent to model providers</h2>
+        <p>When <code>tutr</code> calls an LLM API, it may send your natural-language query, command reference context from <code>&lt;command&gt; --help</code> and/or <code>man &lt;command&gt;</code>, basic system information, and in shell wrapper mode up to 2048 characters of recent terminal output after a failed command.</p>
+        <p>If you use a remote provider, treat this as data sent to that provider and avoid including secrets in commands, queries, or terminal output.</p>
       </main>
 
       <footer class="footer">tutr docs</footer>

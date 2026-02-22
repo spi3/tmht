@@ -163,6 +163,17 @@ tutr-cli configure --clear-api-key
 
 Security note: avoid passing secrets via `--api-key` because CLI args can be exposed in shell history and process listings. Prefer interactive `tutr-cli configure` prompts or provider API key environment variables.
 
+## Data sent to model providers
+
+When `tutr` calls an LLM API, it may send:
+
+- Your natural-language query.
+- Command reference context collected from `<command> --help` and/or `man <command>`.
+- Basic system information (for example platform/OS details).
+- In shell wrapper mode, up to 2048 characters of recent terminal output after a failed command.
+
+If you use remote providers, treat this information as data transmitted to that provider. Avoid including secrets in commands, queries, or terminal output.
+
 ## Configuration
 
 Config is stored in `~/.tutr/config.json`. Environment variables override the config file.
