@@ -44,10 +44,9 @@
 python -m http.server 8000</code></pre>
         <p>Then open <code>http://localhost:8000</code>.</p>
 
-        <h2>Publish package artifacts</h2>
-        <pre><code>uv run poe dist
-uv run poe publish_testpypi
-uv run poe publish_pypi</code></pre>
+        <h2>Create a release</h2>
+        <pre><code>scripts/release.sh patch</code></pre>
+        <p>Use <code>minor</code>, <code>major</code>, or an explicit <code>X.Y.Z</code> version as needed.</p>
       </main>
 
       <footer class="footer">tutr docs</footer>

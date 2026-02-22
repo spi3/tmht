@@ -13,6 +13,7 @@ uv run poe check     # Run lint, format check, type-check, vulnerability scan, a
 uv run poe dist      # Build sdist/wheel and run twine checks
 uv run poe publish_testpypi  # Upload dist/* to TestPyPI
 uv run poe publish_pypi      # Upload dist/* to PyPI
+scripts/release.sh [patch|minor|major|X.Y.Z]  # Canonical release flow: bump, validate, tag, and create GitHub release
 uv run ruff check .  # Lint
 uv run ruff format . # Format
 uv run mypy          # Type-check
@@ -52,7 +53,8 @@ When an agent discovers new information, conventions, or workflow guidance that 
 - Live integration CLI retries are configurable with `TUTR_INTEGRATION_RETRIES` (default `2`) and `TUTR_INTEGRATION_RETRY_BACKOFF_SECONDS` (default `2`) to reduce transient provider/CLI flakiness.
 - Keep live integration prompt/expectation cases in `tests/integration_live_cases.json`; each case uses a single `input` string and structured `expected_any_of` matcher variants (command/flags/tokens/substrings) instead of regex-only checks.
 - Ollama configuration uses `ollama_host` in `TutrConfig` and supports `OLLAMA_HOST` env override; default host is `http://localhost:11434`.
-- For releases, build and validate artifacts with `uv run poe dist` before any upload, then publish with `uv run poe publish_testpypi` and `uv run poe publish_pypi` using `TWINE_USERNAME=__token__` and an API token in `TWINE_PASSWORD`.
+- Releases are performed with `scripts/release.sh` (for example `scripts/release.sh patch`), which bumps `pyproject.toml`, runs `uv run poe check`, creates/pushes a `vX.Y.Z` tag, and creates a GitHub release.
+- Release tags are standardized to `vX.Y.Z` and CI validates that the tag version matches `project.version` in `pyproject.toml`; `0.1.0` is a legacy one-off tag only.
 - When documenting shell rc auto-start for `tutr`, always include a recursion guard env var (for example `TUTR_AUTOSTARTED`) because the wrapper shell sources the user's rc file.
 - The shell wrapper launch config sets both `TUTR_ACTIVE=1` and `TUTR_AUTOSTARTED=1` for the child shell environment to prevent recursive auto-start.
 - Documentation site is static HTML/CSS in `docs/`; preview with `cd docs && python -m http.server 8000` and deploy `docs/` directly via `.github/workflows/docs.yml`.

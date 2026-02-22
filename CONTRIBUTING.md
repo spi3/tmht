@@ -84,3 +84,16 @@ TUTR_RUN_INTEGRATION=1 uv run pytest -q -m integration
 - concise change summary
 - validation steps and results
 
+## Releases
+
+Use the release script:
+
+```bash
+scripts/release.sh patch
+```
+
+You can also pass `minor`, `major`, or an explicit version like `scripts/release.sh 0.1.6`.
+The script updates `pyproject.toml`, runs checks, creates/pushes a `vX.Y.Z` tag, and creates the GitHub release.
+
+Release CI enforces `vX.Y.Z` tags and checks that the tag version matches `pyproject.toml`.
+The historical `0.1.0` tag is legacy and should not be reused for new releases.
