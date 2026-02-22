@@ -1,5 +1,6 @@
 """Unit tests for tutr.config."""
 
+import builtins
 import json
 import stat
 
@@ -191,6 +192,39 @@ class TestLoadConfig:
         file_mode = stat.S_IMODE(config_file.stat().st_mode)
         assert file_mode == 0o600
 
+    def test_load_raises_permission_error_when_config_file_not_readable(
+        self, config_dir, config_file, monkeypatch
+    ):
+        config_dir.mkdir(parents=True)
+        config_file.write_text(json.dumps({"provider": "openai"}))
+
+        def fail_open(*args, **kwargs):
+            raise PermissionError("permission denied")
+
+        monkeypatch.setattr(builtins, "open", fail_open)
+
+        with pytest.raises(PermissionError):
+            load_config()
+
+    def test_load_raises_permission_error_when_file_chmod_fails(
+        self, config_dir, config_file, monkeypatch
+    ):
+        config_dir.mkdir(parents=True)
+        config_file.write_text(json.dumps({"provider": "openai"}))
+
+        original_chmod = config_module.Path.chmod
+
+        def chmod_with_permission_error(self, mode):
+            if self == config_file:
+                raise PermissionError("permission denied")
+            original_chmod(self, mode)
+
+        config_file.chmod(0o644)
+        monkeypatch.setattr(config_module.Path, "chmod", chmod_with_permission_error)
+
+        with pytest.raises(PermissionError):
+            load_config()
+
 
 # ---------------------------------------------------------------------------
 # save_config
@@ -267,6 +301,15 @@ class TestSaveConfig:
 
         raw = config_file.read_text()
         assert "\n" in raw
+
+    def test_raises_permission_error_when_config_dir_is_not_writable(self, monkeypatch):
+        def fail_mkdir(*args, **kwargs):
+            raise PermissionError("permission denied")
+
+        monkeypatch.setattr(config_module.Path, "mkdir", fail_mkdir)
+
+        with pytest.raises(PermissionError):
+            save_config(TutrConfig(model="test/model"))
 
 
 # ---------------------------------------------------------------------------
