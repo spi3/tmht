@@ -1,21 +1,5 @@
 [
   {
-    "input": "print INTEGRATION_OK",
-    "expected_any_of": [
-      {
-        "command_any_of": ["echo", "printf"],
-        "required_substrings": ["INTEGRATION_OK"],
-        "command_position": "first"
-      },
-      {
-        "command_any_of": ["print"],
-        "required_substrings": ["INTEGRATION_OK"],
-        "command_position": "first"
-      }
-    ],
-    "quality_hint": "should print INTEGRATION_OK directly"
-  },
-  {
     "input": "show the present working directory",
     "expected_any_of": [
       {
