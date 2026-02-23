@@ -23,6 +23,46 @@ uv sync
 git config core.hooksPath .githooks
 ```
 
+## Architecture Overview
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│  Entry Points                                                    │
+│                                                                  │
+│  tutr-cli <query>           tutr  /  python -m tutr             │
+│  (one-shot CLI)             (interactive shell wrapper)         │
+└──────────┬──────────────────────────────┬───────────────────────┘
+           │                              │
+           ▼                              ▼
+┌──────────────────────┐   ┌─────────────────────────────────┐
+│  src/tutr/cli/       │   │  src/tutr/shell/                │
+│  app.py  – routing   │   │  loop.py  – PTY loop            │
+│  query.py – query    │   │  detection.py – shell detect    │
+│  configure.py        │   │  hooks.py – rc startup hooks    │
+│  wizard.py – setup   │   │  shell.py – tutor prompt logic  │
+└──────────┬───────────┘   └──────────────┬──────────────────┘
+           └──────────────┬───────────────┘
+                          │
+                          ▼
+           ┌──────────────────────────────┐
+           │  src/tutr/                   │
+           │  tutr.py    – orchestration  │
+           │  llm.py     – LiteLLM calls  │
+           │  prompt.py  – LLM prompts    │
+           │  config.py  – config file    │
+           │  context.py – system info    │
+           │  safety.py  – command safety │
+           │  models/    – Pydantic types  │
+           └──────────────┬───────────────┘
+                          │
+                          ▼
+           ┌──────────────────────────────┐
+           │  LiteLLM → AI Provider       │
+           │  OpenAI · Anthropic · Gemini │
+           │  xAI · Ollama (local)        │
+           └──────────────────────────────┘
+```
+
 ## Development Workflow
 
 Run the app locally:
