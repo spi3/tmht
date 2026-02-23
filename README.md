@@ -57,9 +57,10 @@ Select your LLM provider:
   1. Gemini
   2. Anthropic
   3. OpenAI
-  4. Ollama (local, no API key needed)
+  4. xAI
+  5. Ollama (local, no API key needed)
 
-  Enter choice (1-4): 1
+  Enter choice (1-5): 1
 
 Enter your Gemini API key:
   API key:
@@ -185,6 +186,7 @@ Config is stored in `~/.tutr/config.json`. Environment variables override the co
 | `GEMINI_API_KEY` | Gemini API key | — |
 | `ANTHROPIC_API_KEY` | Anthropic API key | — |
 | `OPENAI_API_KEY` | OpenAI API key | — |
+| `XAI_API_KEY` | xAI API key | — |
 | `OLLAMA_HOST` | Ollama host URL override | `http://localhost:11434` |
 | `TUTR_UPDATE_CHECK` | Enable (`1/true`) or disable (`0/false`) update checks | `true` |
 | `TUTR_SHELL` | Override wrapper shell detection (`bash`, `zsh`, `pwsh`, or `powershell`) | auto-detected |
