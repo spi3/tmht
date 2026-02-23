@@ -58,6 +58,29 @@
         <pre><code>tutr-cli configure --disable-update-check
 tutr-cli configure --enable-update-check</code></pre>
 
+        <h2>Configure command flags</h2>
+        <p>Run <code>tutr-cli configure</code> with no arguments to launch the interactive wizard, or pass any of the flags below for non-interactive use.</p>
+        <table>
+          <thead>
+            <tr><th>Flag</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>--interactive</code></td><td>Run the interactive wizard (default when no other flags are given)</td></tr>
+            <tr><td><code>--provider &lt;name&gt;</code></td><td>LLM provider (<code>anthropic</code>, <code>gemini</code>, <code>ollama</code>, <code>openai</code>, <code>xai</code>)</td></tr>
+            <tr><td><code>--model &lt;id&gt;</code></td><td>Model ID in LiteLLM format (e.g. <code>openai/gpt-4o</code>)</td></tr>
+            <tr><td><code>--api-key &lt;key&gt;</code></td><td>Store a provider API key in config (not recommended — may leak via shell history)</td></tr>
+            <tr><td><code>--clear-api-key</code></td><td>Remove the stored API key from config</td></tr>
+            <tr><td><code>--ollama-host &lt;url&gt;</code></td><td>Set Ollama host URL (e.g. <code>http://localhost:11434</code>)</td></tr>
+            <tr><td><code>--clear-ollama-host</code></td><td>Remove the stored Ollama host from config</td></tr>
+            <tr><td><code>--show-explanation</code></td><td>Enable explanation output by default</td></tr>
+            <tr><td><code>--hide-explanation</code></td><td>Disable explanation output by default</td></tr>
+            <tr><td><code>--enable-update-check</code></td><td>Enable periodic update checks (default)</td></tr>
+            <tr><td><code>--disable-update-check</code></td><td>Disable periodic update checks</td></tr>
+            <tr><td><code>--allow-execute</code></td><td>In shell mode, allow prompting to auto-run tutr suggestions (default)</td></tr>
+            <tr><td><code>--no-execute</code></td><td>In shell mode, never prompt to auto-run tutr suggestions</td></tr>
+          </tbody>
+        </table>
+
         <h2>Helpful runtime vars</h2>
         <table>
           <thead>
