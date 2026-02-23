@@ -4,7 +4,7 @@ This file outlines the vision for the project.
 
 ## Overview
 
-tutr (Tell Me How To) is an AI powered terminal assistant which assists users in discovering and executing terminal commands.
+tutr (Terminal Utility for con(T)extual Responses) is an AI powered terminal assistant which assists users in discovering and executing terminal commands.
 
 ## Terminal
 
