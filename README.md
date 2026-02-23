@@ -165,6 +165,24 @@ tutr-cli configure --clear-api-key
 
 Security note: avoid passing secrets via `--api-key` because CLI args can be exposed in shell history and process listings. Prefer interactive `tutr-cli configure` prompts or provider API key environment variables.
 
+### Configure Flags
+
+| Flag | Description |
+|---|---|
+| `--interactive` | Run the interactive wizard (default when no other flags are given) |
+| `--provider <name>` | LLM provider (`anthropic`, `gemini`, `ollama`, `openai`, `xai`) |
+| `--model <id>` | Model ID in LiteLLM format (e.g. `openai/gpt-4o`) |
+| `--api-key <key>` | Store a provider API key in config (not recommended — may leak via shell history) |
+| `--clear-api-key` | Remove the stored API key from config |
+| `--ollama-host <url>` | Set Ollama host URL (e.g. `http://localhost:11434`) |
+| `--clear-ollama-host` | Remove the stored Ollama host from config |
+| `--show-explanation` | Enable explanation output by default |
+| `--hide-explanation` | Disable explanation output by default |
+| `--enable-update-check` | Enable periodic update checks (default) |
+| `--disable-update-check` | Disable periodic update checks |
+| `--allow-execute` | In shell mode, allow prompting to auto-run tutr suggestions (default) |
+| `--no-execute` | In shell mode, never prompt to auto-run tutr suggestions |
+
 ## Data sent to model providers
 
 When `tutr` calls an LLM API, it may send:
