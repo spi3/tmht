@@ -183,6 +183,24 @@ Security note: avoid passing secrets via `--api-key` because CLI args can be exp
 | `--allow-execute` | In shell mode, allow prompting to auto-run tutr suggestions (default) |
 | `--no-execute` | In shell mode, never prompt to auto-run tutr suggestions |
 
+## Update Checks
+
+`tutr` periodically checks PyPI for newer versions (at most once every 24 hours). When an update is available, it prints a notice to stderr with the suggested update command. In an interactive terminal it also offers to run the update immediately.
+
+The check runs in the background and times out after 1.5 seconds so it never slows down normal usage. A timestamp cache is stored at `~/.tutr/update-check.json`.
+
+To disable update checks permanently:
+
+```bash
+tutr-cli configure --disable-update-check
+```
+
+Or suppress checks for a single session:
+
+```bash
+TUTR_UPDATE_CHECK=0 tutr ...
+```
+
 ## Data sent to model providers
 
 When `tutr` calls an LLM API, it may send:

@@ -81,6 +81,23 @@ tutr-cli configure --enable-update-check</code></pre>
           </tbody>
         </table>
 
+        <h2>Update checks</h2>
+        <p>
+          <code>tutr</code> periodically checks PyPI for newer versions at most once every 24 hours.
+          When a newer version is found it prints a notice to stderr with a suggested update command
+          (e.g. <code>pipx upgrade tutr</code> or <code>uv tool upgrade tutr</code>).
+          In an interactive terminal it also prompts you to run the update immediately.
+        </p>
+        <p>
+          The check runs in a background thread with a 1.5-second network timeout, so it never
+          delays a normal query. The last-checked timestamp is cached at
+          <code>~/.tutr/update-check.json</code>.
+        </p>
+        <p>To disable update checks permanently:</p>
+        <pre><code>tutr-cli configure --disable-update-check</code></pre>
+        <p>To suppress checks for a single session, set the environment variable:</p>
+        <pre><code>TUTR_UPDATE_CHECK=0</code></pre>
+
         <h2>Helpful runtime vars</h2>
         <table>
           <thead>
