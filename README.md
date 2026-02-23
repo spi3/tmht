@@ -39,7 +39,7 @@ uvx tutr
 For development from source:
 
 ```bash
-git clone https://github.com/spi/tutr.git
+git clone https://github.com/spi3/tutr.git
 cd tutr
 uv sync
 ```
